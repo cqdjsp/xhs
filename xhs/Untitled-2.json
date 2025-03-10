@@ -1,0 +1,955 @@
+{
+    "data": {
+        "result": {
+            "code": 0,
+            "message": "",
+            "success": true
+        },
+        "message_list": [
+            {
+                "id": "341392400",
+                "type": "liked/item",
+                "title": "赞了你的笔记",
+                "score": 341392400,
+                "item_info": {
+                    "type": "note_info",
+                    "id": "673be5d10000000007035e47",
+                    "image": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o6g5nr30f2gbqtk04h23qg?imageView2/2/w/1080/format/jpg",
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "link": "xhsdiscover://item/discovery.673be5d10000000007035e47?type=normal&sourceID=notifications&feedType=single",
+                    "status": 0,
+                    "image_info": {
+                        "url": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o6g5nr30f2gbqtk04h23qg?imageView2/2/w/1080/format/jpg",
+                        "width": 1280,
+                        "height": 1920
+                    },
+                    "user_info": {
+                        "userid": "5f6303c5000000000101ebb4",
+                        "nickname": "小红薯_",
+                        "image": "https://img.xiaohongshu.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg@120w_120h_92q_1e_1c_1x.jpg",
+                        "red_official_verify_type": 0
+                    },
+                    "xsec_token": "ABvMrrFvrVJdXvNL1rBhNXhlQdMqJ2bB0UBc1Z49uVkFk="
+                },
+                "time": 1739498750,
+                "user_info": {
+                    "fstatus": "fans",
+                    "red_official_verify_type": 0,
+                    "indicator": "你的粉丝",
+                    "xsec_token": "ABPQ1jVW3oQ48D_9Qqo8RpsbbEPqRTd6KbX7J0TiKcCe8=",
+                    "userid": "6070464f000000000101f44f",
+                    "nickname": "kekekrk",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/529594cd91bbf4c43608131bf9134bdc.jpg?imageView2/2/w/120/format/jpg"
+                },
+                "track_type": "6",
+                "liked": false,
+                "time_flag": 0
+            },
+            {
+                "item_info": {
+                    "attach_item_info": {
+                        "xsec_token": "LBqQH2FPtWwfd-COv1ouajQwFiYEm1vhVbEDoyHJ0yNAQ=",
+                        "type": "note_info",
+                        "id": "674408a40000000007036eaf",
+                        "image": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg",
+                        "image_info": {
+                            "height": 1707,
+                            "url": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg",
+                            "width": 1280
+                        },
+                        "illegal_info": {
+                            "status": 0,
+                            "desc": "",
+                            "illegal_status": "NORMAL"
+                        },
+                        "link": "xhsdiscover://item/discovery.674408a40000000007036eaf?type=normal&sourceID=notifications&feedType=single",
+                        "status": 0
+                    },
+                    "extra_info": {
+                        "status": 1,
+                        "desc": "隐私专辑"
+                    },
+                    "status": 0,
+                    "xsec_token": "ABpuym0PcQd35FOE78Wc1TrDYuh4HQFGgyuyT44NSUKug=",
+                    "image": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg",
+                    "id": "6248112f000000000101e907",
+                    "content": "默认专辑",
+                    "illegal_info": {
+                        "illegal_status": "NORMAL",
+                        "status": 0,
+                        "desc": ""
+                    },
+                    "link": "xhsdiscover://item/discovery.674408a40000000007036eaf?type=normal&sourceID=notifications&feedType=single",
+                    "type": "board_info"
+                },
+                "track_type": "4",
+                "liked": false,
+                "time_flag": 0,
+                "id": "340695977",
+                "title": "收藏了你的笔记",
+                "score": 340695977,
+                "user_info": {
+                    "indicator": "你的粉丝",
+                    "xsec_token": "ABpm-PkKSma0yeqArafF-pW4wbypFZm9msARLSZwix8Do=",
+                    "userid": "60bcb7cd0000000001006639",
+                    "nickname": "护肤学姐123",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/625aacf0f49c9fb2c400fd40.jpg?imageView2/2/w/120/format/jpg",
+                    "fstatus": "fans",
+                    "red_official_verify_type": 0
+                },
+                "type": "faved/item",
+                "time": 1739247605
+            },
+            {
+                "title": "赞了你的笔记",
+                "time": 1739247604,
+                "user_info": {
+                    "indicator": "你的粉丝",
+                    "xsec_token": "ABpm-PkKSma0yeqArafF-pW4wbypFZm9msARLSZwix8Do=",
+                    "userid": "60bcb7cd0000000001006639",
+                    "nickname": "护肤学姐123",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/625aacf0f49c9fb2c400fd40.jpg?imageView2/2/w/120/format/jpg",
+                    "fstatus": "fans",
+                    "red_official_verify_type": 0
+                },
+                "item_info": {
+                    "type": "note_info",
+                    "id": "674408a40000000007036eaf",
+                    "image": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg",
+                    "link": "xhsdiscover://item/discovery.674408a40000000007036eaf?type=normal&sourceID=notifications&feedType=single",
+                    "status": 0,
+                    "xsec_token": "ABpVFtOwKSbX4jiiCN98wDI7DSws83BiMGV0bKwgeen4M=",
+                    "image_info": {
+                        "url": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg",
+                        "width": 1280,
+                        "height": 1707
+                    },
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "user_info": {
+                        "userid": "5f6303c5000000000101ebb4",
+                        "nickname": "小红薯_",
+                        "image": "https://img.xiaohongshu.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg@120w_120h_92q_1e_1c_1x.jpg",
+                        "red_official_verify_type": 0
+                    }
+                },
+                "track_type": "6",
+                "liked": false,
+                "type": "liked/item",
+                "score": 340695968,
+                "time_flag": 0,
+                "id": "340695968"
+            },
+            {
+                "id": "330680490",
+                "time": 1735954634,
+                "user_info": {
+                    "xsec_token": "ABin9nDHA6ZQXYh78l3lzV3AQGrYEmf8Cf3WboLOI33J0=",
+                    "userid": "64aabe66000000001f005ee3",
+                    "nickname": "开锁匠",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/1000g2jo2p9pbdj8jm04g5p5anpj7onn3q66t2no?imageView2/2/w/120/format/jpg",
+                    "fstatus": "none",
+                    "red_official_verify_type": 0
+                },
+                "liked": false,
+                "type": "liked/item",
+                "title": "赞了你的笔记",
+                "score": 330680490,
+                "item_info": {
+                    "user_info": {
+                        "userid": "5f6303c5000000000101ebb4",
+                        "nickname": "小红薯_",
+                        "image": "https://img.xiaohongshu.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg@120w_120h_92q_1e_1c_1x.jpg",
+                        "red_official_verify_type": 0
+                    },
+                    "status": 0,
+                    "image_info": {
+                        "url": "http://ci.xiaohongshu.com/1000g0082prd6774k80005nr30f2gbqtknk2nh6o?imageView2/2/w/1080/format/jpg",
+                        "width": 1280,
+                        "height": 1920
+                    },
+                    "illegal_info": {
+                        "illegal_status": "NORMAL",
+                        "status": 0,
+                        "desc": ""
+                    },
+                    "link": "xhsdiscover://item/discovery.64af440c000000001a013d89?type=normal&sourceID=notifications&feedType=single",
+                    "xsec_token": "ABWSXrIHMdh-Uhx8R22Em-XxTLwBJh7ElrjWzN_-6DyNw=",
+                    "type": "note_info",
+                    "id": "64af440c000000001a013d89",
+                    "image": "http://ci.xiaohongshu.com/1000g0082prd6774k80005nr30f2gbqtknk2nh6o?imageView2/2/w/1080/format/jpg"
+                },
+                "track_type": "6",
+                "time_flag": 0
+            },
+            {
+                "user_info": {
+                    "nickname": "开锁匠",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/1000g2jo2p9pbdj8jm04g5p5anpj7onn3q66t2no?imageView2/2/w/120/format/jpg",
+                    "fstatus": "none",
+                    "red_official_verify_type": 0,
+                    "xsec_token": "ABin9nDHA6ZQXYh78l3lzV3AQGrYEmf8Cf3WboLOI33J0=",
+                    "userid": "64aabe66000000001f005ee3"
+                },
+                "item_info": {
+                    "content": "默认专辑",
+                    "image": "http://ci.xiaohongshu.com/1000g0082prd6774k80005nr30f2gbqtknk2nh6o?imageView2/2/w/1080/format/jpg",
+                    "link": "xhsdiscover://item/discovery.64af440c000000001a013d89?type=normal&sourceID=notifications&feedType=single",
+                    "status": 0,
+                    "xsec_token": "ABpuym0PcQd35FOE78Wc1TrDYuh4HQFGgyuyT44NSUKug=",
+                    "type": "board_info",
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "attach_item_info": {
+                        "id": "64af440c000000001a013d89",
+                        "image": "http://ci.xiaohongshu.com/1000g0082prd6774k80005nr30f2gbqtknk2nh6o?imageView2/2/w/1080/format/jpg",
+                        "image_info": {
+                            "url": "http://ci.xiaohongshu.com/1000g0082prd6774k80005nr30f2gbqtknk2nh6o?imageView2/2/w/1080/format/jpg",
+                            "width": 1280,
+                            "height": 1920
+                        },
+                        "illegal_info": {
+                            "desc": "",
+                            "illegal_status": "NORMAL",
+                            "status": 0
+                        },
+                        "link": "xhsdiscover://item/discovery.64af440c000000001a013d89?type=normal&sourceID=notifications&feedType=single",
+                        "status": 0,
+                        "xsec_token": "LBA_5AzvFNKasBneiRdFdq-T_mH3Ul6i5ASYOnRaA3sRg=",
+                        "type": "note_info"
+                    },
+                    "extra_info": {
+                        "status": 1,
+                        "desc": "隐私专辑"
+                    },
+                    "id": "6248112f000000000101e907"
+                },
+                "liked": false,
+                "time_flag": 0,
+                "id": "330680491",
+                "type": "faved/item",
+                "time": 1735954634,
+                "score": 330680491,
+                "title": "收藏了你的笔记",
+                "track_type": "4"
+            },
+            {
+                "id": "327940985",
+                "type": "liked/item",
+                "score": 327940985,
+                "user_info": {
+                    "fstatus": "none",
+                    "red_official_verify_type": 0,
+                    "xsec_token": "ABz0lindZpTZTSGI_NkFP61MtT5yzXsgDEI_jwcuWf-3o=",
+                    "userid": "579b0d3c6a6a696b9a76b29a",
+                    "nickname": "؏؏☝ᖗ乛◡乛ᖘ☝؏؏雪姨",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/583c439dd8601e2c90f4d6bc.jpg?imageView2/2/w/120/format/jpg"
+                },
+                "title": "赞了你的笔记",
+                "time": 1734877949,
+                "item_info": {
+                    "image_info": {
+                        "url": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg",
+                        "width": 1280,
+                        "height": 1707
+                    },
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "status": 0,
+                    "type": "note_info",
+                    "image": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg",
+                    "user_info": {
+                        "userid": "5f6303c5000000000101ebb4",
+                        "nickname": "小红薯_",
+                        "image": "https://img.xiaohongshu.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg@120w_120h_92q_1e_1c_1x.jpg",
+                        "red_official_verify_type": 0
+                    },
+                    "xsec_token": "ABpVFtOwKSbX4jiiCN98wDI7DSws83BiMGV0bKwgeen4M=",
+                    "id": "674408a40000000007036eaf",
+                    "link": "xhsdiscover://item/discovery.674408a40000000007036eaf?type=normal&sourceID=notifications&feedType=single"
+                },
+                "track_type": "6",
+                "liked": false,
+                "time_flag": 0
+            },
+            {
+                "liked": false,
+                "id": "327298678",
+                "type": "faved/item",
+                "time": 1734661352,
+                "score": 327298678,
+                "user_info": {
+                    "userid": "63898ac20000000023027246",
+                    "nickname": "小红薯638A93C3",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg?imageView2/2/w/120/format/jpg",
+                    "fstatus": "fans",
+                    "red_official_verify_type": 0,
+                    "indicator": "你的粉丝",
+                    "xsec_token": "ABiWqhEoYtKmhRshTK5cabUFkqaDZU6v24R0dqF-NHlWU="
+                },
+                "track_type": "4",
+                "title": "收藏了你的笔记",
+                "item_info": {
+                    "type": "board_info",
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "link": "xhsdiscover://item/discovery.675155af0000000008007635?type=normal&sourceID=notifications&feedType=single",
+                    "attach_item_info": {
+                        "xsec_token": "LBFO-mJGqd14GzkKGvK3vMP-mWQL9HGjef1Vq0D7hEjuM=",
+                        "type": "note_info",
+                        "id": "675155af0000000008007635",
+                        "image": "http://ci.xiaohongshu.com/1040g00831b13uh23ni0g5nr30f2gbqtkb9r54ho?imageView2/2/w/1080/format/jpg",
+                        "image_info": {
+                            "url": "http://ci.xiaohongshu.com/1040g00831b13uh23ni0g5nr30f2gbqtkb9r54ho?imageView2/2/w/1080/format/jpg",
+                            "width": 1280,
+                            "height": 1920
+                        },
+                        "illegal_info": {
+                            "status": 0,
+                            "desc": "",
+                            "illegal_status": "NORMAL"
+                        },
+                        "link": "xhsdiscover://item/discovery.675155af0000000008007635?type=normal&sourceID=notifications&feedType=single",
+                        "status": 0
+                    },
+                    "extra_info": {
+                        "desc": "隐私专辑",
+                        "status": 1
+                    },
+                    "id": "6248112f000000000101e907",
+                    "content": "默认专辑",
+                    "image": "http://ci.xiaohongshu.com/1040g00831b13uh23ni0g5nr30f2gbqtkb9r54ho?imageView2/2/w/1080/format/jpg",
+                    "status": 0,
+                    "xsec_token": "ABpuym0PcQd35FOE78Wc1TrDYuh4HQFGgyuyT44NSUKug="
+                },
+                "time_flag": 0
+            },
+            {
+                "id": "327298671",
+                "time": 1734661349,
+                "time_flag": 0,
+                "type": "liked/item",
+                "title": "赞了你的笔记",
+                "score": 327298671,
+                "user_info": {
+                    "xsec_token": "ABiWqhEoYtKmhRshTK5cabUFkqaDZU6v24R0dqF-NHlWU=",
+                    "userid": "63898ac20000000023027246",
+                    "nickname": "小红薯638A93C3",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg?imageView2/2/w/120/format/jpg",
+                    "fstatus": "fans",
+                    "red_official_verify_type": 0,
+                    "indicator": "你的粉丝"
+                },
+                "item_info": {
+                    "type": "note_info",
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "link": "xhsdiscover://item/discovery.675155af0000000008007635?type=normal&sourceID=notifications&feedType=single",
+                    "xsec_token": "ABs8kpd3M9GnkVgu91kdk0BLrr2giHIET9GJyrecqCsmI=",
+                    "status": 0,
+                    "id": "675155af0000000008007635",
+                    "image": "http://ci.xiaohongshu.com/1040g00831b13uh23ni0g5nr30f2gbqtkb9r54ho?imageView2/2/w/1080/format/jpg",
+                    "image_info": {
+                        "url": "http://ci.xiaohongshu.com/1040g00831b13uh23ni0g5nr30f2gbqtkb9r54ho?imageView2/2/w/1080/format/jpg",
+                        "width": 1280,
+                        "height": 1920
+                    },
+                    "user_info": {
+                        "nickname": "小红薯_",
+                        "image": "https://img.xiaohongshu.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg@120w_120h_92q_1e_1c_1x.jpg",
+                        "red_official_verify_type": 0,
+                        "userid": "5f6303c5000000000101ebb4"
+                    }
+                },
+                "track_type": "6",
+                "liked": false
+            },
+            {
+                "id": "327120370",
+                "type": "liked/item",
+                "title": "赞了你的笔记",
+                "liked": false,
+                "time": 1734583943,
+                "score": 327120370,
+                "user_info": {
+                    "indicator": "你的粉丝",
+                    "xsec_token": "ABcnzrQkI4aPymqcyYAhs4STV1-AP2ijgOCRMZOkgtpPc=",
+                    "userid": "6352b5bf000000001802e28b",
+                    "nickname": "^&s|5v|p",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/d784fc20c996f3d2f39d034c404f234e.jpg?imageView2/2/w/120/format/jpg",
+                    "fstatus": "fans",
+                    "red_official_verify_type": 0
+                },
+                "item_info": {
+                    "link": "xhsdiscover://item/discovery.67456e520000000007034e6c?type=normal&sourceID=notifications&feedType=single",
+                    "image_info": {
+                        "url": "http://ci.xiaohongshu.com/1040g00831alfup197i005nr30f2gbqtk2daa148?imageView2/2/w/1080/format/jpg",
+                        "width": 1280,
+                        "height": 1920
+                    },
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "user_info": {
+                        "userid": "5f6303c5000000000101ebb4",
+                        "nickname": "小红薯_",
+                        "image": "https://img.xiaohongshu.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg@120w_120h_92q_1e_1c_1x.jpg",
+                        "red_official_verify_type": 0
+                    },
+                    "status": 0,
+                    "xsec_token": "ABbvf-J2izU7Xp2DW5tVEDfmADE2ONyip99y0cC5mQTyE=",
+                    "type": "note_info",
+                    "id": "67456e520000000007034e6c",
+                    "image": "http://ci.xiaohongshu.com/1040g00831alfup197i005nr30f2gbqtk2daa148?imageView2/2/w/1080/format/jpg"
+                },
+                "track_type": "6",
+                "time_flag": 0
+            },
+            {
+                "user_info": {
+                    "nickname": "Cqdjsp",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/63367d2b0000000009031f10.jpg?imageView2/2/w/120/format/jpg",
+                    "fstatus": "fans",
+                    "red_official_verify_type": 0,
+                    "indicator": "你的粉丝",
+                    "xsec_token": "ABYuvgmc_oxHZ0XXN-uvdA8kV9iCssX0mZ1PDyBtcOImk=",
+                    "userid": "63367d2b0000000009031f10"
+                },
+                "track_type": "6",
+                "type": "liked/item",
+                "title": "赞了你的笔记",
+                "time": 1734581921,
+                "score": 327114775,
+                "id": "327114775",
+                "item_info": {
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "link": "xhsdiscover://item/discovery.673ae144000000000702b28f?type=normal&sourceID=notifications&feedType=single",
+                    "user_info": {
+                        "userid": "5f6303c5000000000101ebb4",
+                        "nickname": "小红薯_",
+                        "image": "https://img.xiaohongshu.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg@120w_120h_92q_1e_1c_1x.jpg",
+                        "red_official_verify_type": 0
+                    },
+                    "xsec_token": "ABpCMFubXHpy1lM7_EL259HYPy7U9_BsxbHxlQ2I7ZKBk=",
+                    "type": "note_info",
+                    "id": "673ae144000000000702b28f",
+                    "image": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o005nr30f2gbqtk0c0a7to?imageView2/2/w/1080/format/jpg",
+                    "image_info": {
+                        "width": 1280,
+                        "height": 1920,
+                        "url": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o005nr30f2gbqtk0c0a7to?imageView2/2/w/1080/format/jpg"
+                    },
+                    "status": 0
+                },
+                "liked": false,
+                "time_flag": 0
+            },
+            {
+                "user_info": {
+                    "fstatus": "fans",
+                    "red_official_verify_type": 0,
+                    "indicator": "你的粉丝",
+                    "xsec_token": "ABYuvgmc_oxHZ0XXN-uvdA8kV9iCssX0mZ1PDyBtcOImk=",
+                    "userid": "63367d2b0000000009031f10",
+                    "nickname": "Cqdjsp",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/63367d2b0000000009031f10.jpg?imageView2/2/w/120/format/jpg"
+                },
+                "item_info": {
+                    "id": "6248112f000000000101e907",
+                    "content": "默认专辑",
+                    "image": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg",
+                    "extra_info": {
+                        "status": 1,
+                        "desc": "隐私专辑"
+                    },
+                    "xsec_token": "ABpuym0PcQd35FOE78Wc1TrDYuh4HQFGgyuyT44NSUKug=",
+                    "type": "board_info",
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "link": "xhsdiscover://item/discovery.674408a40000000007036eaf?type=normal&sourceID=notifications&feedType=single",
+                    "attach_item_info": {
+                        "id": "674408a40000000007036eaf",
+                        "image": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg",
+                        "image_info": {
+                            "width": 1280,
+                            "height": 1707,
+                            "url": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg"
+                        },
+                        "illegal_info": {
+                            "status": 0,
+                            "desc": "",
+                            "illegal_status": "NORMAL"
+                        },
+                        "link": "xhsdiscover://item/discovery.674408a40000000007036eaf?type=normal&sourceID=notifications&feedType=single",
+                        "status": 0,
+                        "xsec_token": "LBqQH2FPtWwfd-COv1ouajQwFiYEm1vhVbEDoyHJ0yNAQ=",
+                        "type": "note_info"
+                    },
+                    "status": 0
+                },
+                "liked": false,
+                "track_type": "4",
+                "time_flag": 0,
+                "id": "327114686",
+                "type": "faved/item",
+                "title": "收藏了你的笔记",
+                "time": 1734581885,
+                "score": 327114686
+            },
+            {
+                "user_info": {
+                    "nickname": "Cqdjsp",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/63367d2b0000000009031f10.jpg?imageView2/2/w/120/format/jpg",
+                    "fstatus": "fans",
+                    "red_official_verify_type": 0,
+                    "indicator": "你的粉丝",
+                    "xsec_token": "ABYuvgmc_oxHZ0XXN-uvdA8kV9iCssX0mZ1PDyBtcOImk=",
+                    "userid": "63367d2b0000000009031f10"
+                },
+                "track_type": "6",
+                "time_flag": 0,
+                "title": "赞了你的笔记",
+                "score": 327114685,
+                "time": 1734581884,
+                "item_info": {
+                    "id": "674408a40000000007036eaf",
+                    "image_info": {
+                        "width": 1280,
+                        "height": 1707,
+                        "url": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg"
+                    },
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "link": "xhsdiscover://item/discovery.674408a40000000007036eaf?type=normal&sourceID=notifications&feedType=single",
+                    "user_info": {
+                        "userid": "5f6303c5000000000101ebb4",
+                        "nickname": "小红薯_",
+                        "image": "https://img.xiaohongshu.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg@120w_120h_92q_1e_1c_1x.jpg",
+                        "red_official_verify_type": 0
+                    },
+                    "xsec_token": "ABpVFtOwKSbX4jiiCN98wDI7DSws83BiMGV0bKwgeen4M=",
+                    "type": "note_info",
+                    "status": 0,
+                    "image": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg"
+                },
+                "liked": false,
+                "id": "327114685",
+                "type": "liked/item"
+            },
+            {
+                "id": "326957125",
+                "title": "赞了你的笔记",
+                "time": 1734503920,
+                "score": 326957125,
+                "track_type": "6",
+                "type": "liked/item",
+                "user_info": {
+                    "nickname": "小红薯67856CE9",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/645b7eecf82b98b5c9349913.jpg?imageView2/2/w/120/format/jpg",
+                    "fstatus": "none",
+                    "red_official_verify_type": 0,
+                    "xsec_token": "ABMtH_nVTBxjXHHIiLH0s4RS8_PFqrV7kB4wZWL4y10YY=",
+                    "userid": "652a6304000000002a01b979"
+                },
+                "item_info": {
+                    "status": 0,
+                    "type": "note_info",
+                    "user_info": {
+                        "userid": "5f6303c5000000000101ebb4",
+                        "nickname": "小红薯_",
+                        "image": "https://img.xiaohongshu.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg@120w_120h_92q_1e_1c_1x.jpg",
+                        "red_official_verify_type": 0
+                    },
+                    "image_info": {
+                        "height": 1920,
+                        "url": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmue05nr30f2gbqtkupceh9o?imageView2/2/w/1080/format/jpg",
+                        "width": 1280
+                    },
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "link": "xhsdiscover://item/discovery.6743dc6500000000070269ec?type=normal&sourceID=notifications&feedType=single",
+                    "xsec_token": "ABRVqXUzic93Dhg4dxugwzDWiUUkhatabpbtHwV5xIeAI=",
+                    "id": "6743dc6500000000070269ec",
+                    "image": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmue05nr30f2gbqtkupceh9o?imageView2/2/w/1080/format/jpg"
+                },
+                "liked": false,
+                "time_flag": 0
+            },
+            {
+                "id": "326590546",
+                "type": "liked/item",
+                "time": 1734347660,
+                "item_info": {
+                    "id": "61753d05000000000102d347",
+                    "image_info": {
+                        "url": "http://ci.xiaohongshu.com/376c905d-b6fd-3d99-bc11-136adc1e155a?imageView2/2/w/1080/format/jpg",
+                        "width": 1280,
+                        "height": 1706
+                    },
+                    "illegal_info": {
+                        "illegal_status": "NORMAL",
+                        "status": 0,
+                        "desc": ""
+                    },
+                    "type": "note_info",
+                    "link": "xhsdiscover://item/discovery.61753d05000000000102d347?type=normal&sourceID=notifications&feedType=single",
+                    "user_info": {
+                        "image": "https://img.xiaohongshu.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg@120w_120h_92q_1e_1c_1x.jpg",
+                        "red_official_verify_type": 0,
+                        "userid": "5f6303c5000000000101ebb4",
+                        "nickname": "小红薯_"
+                    },
+                    "status": 0,
+                    "xsec_token": "ABSSYX8tcIItSfOy_SKouMj5_3tN1GS7h6KLKayL_vk3U=",
+                    "image": "http://ci.xiaohongshu.com/376c905d-b6fd-3d99-bc11-136adc1e155a?imageView2/2/w/1080/format/jpg"
+                },
+                "liked": false,
+                "time_flag": 0,
+                "title": "赞了你的笔记",
+                "score": 326590546,
+                "user_info": {
+                    "xsec_token": "ABImCwco_Lz8hpgFnO8pV4oHZj3-LT02XHYgJq_76oYDI=",
+                    "userid": "5bb71bee04409c0001a76c69",
+                    "nickname": "六六",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/5bb71bee04409c0001a76c69.jpg?imageView2/2/w/120/format/jpg",
+                    "fstatus": "none",
+                    "red_official_verify_type": 0
+                },
+                "track_type": "6"
+            },
+            {
+                "item_info": {
+                    "id": "674408a40000000007036eaf",
+                    "image_info": {
+                        "width": 1280,
+                        "height": 1707,
+                        "url": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg"
+                    },
+                    "link": "xhsdiscover://item/discovery.674408a40000000007036eaf?type=normal&sourceID=notifications&feedType=single",
+                    "status": 0,
+                    "type": "note_info",
+                    "image": "http://ci.xiaohongshu.com/1040g2sg31ajuso4gmueg5nr30f2gbqtkhq58qv8?imageView2/2/w/1080/format/jpg",
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "user_info": {
+                        "userid": "5f6303c5000000000101ebb4",
+                        "nickname": "小红薯_",
+                        "image": "https://img.xiaohongshu.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg@120w_120h_92q_1e_1c_1x.jpg",
+                        "red_official_verify_type": 0
+                    },
+                    "xsec_token": "ABpVFtOwKSbX4jiiCN98wDI7DSws83BiMGV0bKwgeen4M="
+                },
+                "time_flag": 0,
+                "id": "325161755",
+                "title": "赞了你的笔记",
+                "score": 325161755,
+                "user_info": {
+                    "userid": "5b2a57bfe8ac2b25aabc9bcb",
+                    "nickname": "今天也要加油哦！",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/642e710806c1f22afe99ccad.jpg?imageView2/2/w/120/format/jpg",
+                    "fstatus": "none",
+                    "red_official_verify_type": 0,
+                    "xsec_token": "AB6ykON9hZZVrdk5DL8Y_nKL4BqXInoGmZvYSh0pJOBNM="
+                },
+                "type": "liked/item",
+                "time": 1733908638,
+                "track_type": "6",
+                "liked": false
+            },
+            {
+                "liked": false,
+                "time_flag": 0,
+                "id": "324669623",
+                "type": "liked/item",
+                "score": 324669623,
+                "track_type": "6",
+                "title": "赞了你的笔记",
+                "time": 1733695124,
+                "user_info": {
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/1040g2jo3143nmkno1m605odihk6k1hn2e1m3lb0?imageView2/2/w/120/format/jpg",
+                    "fstatus": "fans",
+                    "red_official_verify_type": 0,
+                    "indicator": "你的粉丝",
+                    "xsec_token": "ABewATB3fFVsxgpAPGF75owL1mYs5jbzAtMX6ruEIKbwM=",
+                    "userid": "61b28d0d000000001000c6e2",
+                    "nickname": "意自形生1834"
+                },
+                "item_info": {
+                    "type": "note_info",
+                    "id": "673ae144000000000702b28f",
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "user_info": {
+                        "nickname": "小红薯_",
+                        "image": "https://img.xiaohongshu.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg@120w_120h_92q_1e_1c_1x.jpg",
+                        "red_official_verify_type": 0,
+                        "userid": "5f6303c5000000000101ebb4"
+                    },
+                    "xsec_token": "ABpCMFubXHpy1lM7_EL259HYPy7U9_BsxbHxlQ2I7ZKBk=",
+                    "image": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o005nr30f2gbqtk0c0a7to?imageView2/2/w/1080/format/jpg",
+                    "image_info": {
+                        "height": 1920,
+                        "url": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o005nr30f2gbqtk0c0a7to?imageView2/2/w/1080/format/jpg",
+                        "width": 1280
+                    },
+                    "link": "xhsdiscover://item/discovery.673ae144000000000702b28f?type=normal&sourceID=notifications&feedType=single",
+                    "status": 0
+                }
+            },
+            {
+                "id": "324669624",
+                "type": "faved/item",
+                "time": 1733695124,
+                "score": 324669624,
+                "user_info": {
+                    "red_official_verify_type": 0,
+                    "indicator": "你的粉丝",
+                    "xsec_token": "ABewATB3fFVsxgpAPGF75owL1mYs5jbzAtMX6ruEIKbwM=",
+                    "userid": "61b28d0d000000001000c6e2",
+                    "nickname": "意自形生1834",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/1040g2jo3143nmkno1m605odihk6k1hn2e1m3lb0?imageView2/2/w/120/format/jpg",
+                    "fstatus": "fans"
+                },
+                "track_type": "4",
+                "liked": false,
+                "time_flag": 0,
+                "title": "收藏了你的笔记",
+                "item_info": {
+                    "id": "6248112f000000000101e907",
+                    "image": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o005nr30f2gbqtk0c0a7to?imageView2/2/w/1080/format/jpg",
+                    "link": "xhsdiscover://item/discovery.673ae144000000000702b28f?type=normal&sourceID=notifications&feedType=single",
+                    "attach_item_info": {
+                        "id": "673ae144000000000702b28f",
+                        "image": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o005nr30f2gbqtk0c0a7to?imageView2/2/w/1080/format/jpg",
+                        "image_info": {
+                            "height": 1920,
+                            "url": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o005nr30f2gbqtk0c0a7to?imageView2/2/w/1080/format/jpg",
+                            "width": 1280
+                        },
+                        "illegal_info": {
+                            "status": 0,
+                            "desc": "",
+                            "illegal_status": "NORMAL"
+                        },
+                        "link": "xhsdiscover://item/discovery.673ae144000000000702b28f?type=normal&sourceID=notifications&feedType=single",
+                        "status": 0,
+                        "xsec_token": "LBKl0tOAKdSkw9Xzzr15-tssG3fO5WUINF5zPItic1ZJI=",
+                        "type": "note_info"
+                    },
+                    "extra_info": {
+                        "status": 1,
+                        "desc": "隐私专辑"
+                    },
+                    "status": 0,
+                    "xsec_token": "ABpuym0PcQd35FOE78Wc1TrDYuh4HQFGgyuyT44NSUKug=",
+                    "type": "board_info",
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "content": "默认专辑"
+                }
+            },
+            {
+                "track_type": "4",
+                "liked": false,
+                "time_flag": 0,
+                "id": "324669621",
+                "title": "收藏了你的笔记",
+                "time": 1733695116,
+                "score": 324669621,
+                "item_info": {
+                    "extra_info": {
+                        "status": 1,
+                        "desc": "隐私专辑"
+                    },
+                    "type": "board_info",
+                    "content": "默认专辑",
+                    "image": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o6g5nr30f2gbqtk04h23qg?imageView2/2/w/1080/format/jpg",
+                    "attach_item_info": {
+                        "id": "673be5d10000000007035e47",
+                        "image": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o6g5nr30f2gbqtk04h23qg?imageView2/2/w/1080/format/jpg",
+                        "image_info": {
+                            "url": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o6g5nr30f2gbqtk04h23qg?imageView2/2/w/1080/format/jpg",
+                            "width": 1280,
+                            "height": 1920
+                        },
+                        "illegal_info": {
+                            "status": 0,
+                            "desc": "",
+                            "illegal_status": "NORMAL"
+                        },
+                        "link": "xhsdiscover://item/discovery.673be5d10000000007035e47?type=normal&sourceID=notifications&feedType=single",
+                        "status": 0,
+                        "xsec_token": "LBiccxn-an3fqzDZgYXkRKwN3Xc7ywOOcJkqvOhaaM2OM=",
+                        "type": "note_info"
+                    },
+                    "status": 0,
+                    "xsec_token": "ABpuym0PcQd35FOE78Wc1TrDYuh4HQFGgyuyT44NSUKug=",
+                    "id": "6248112f000000000101e907",
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "link": "xhsdiscover://item/discovery.673be5d10000000007035e47?type=normal&sourceID=notifications&feedType=single"
+                },
+                "type": "faved/item",
+                "user_info": {
+                    "indicator": "你的粉丝",
+                    "xsec_token": "ABewATB3fFVsxgpAPGF75owL1mYs5jbzAtMX6ruEIKbwM=",
+                    "userid": "61b28d0d000000001000c6e2",
+                    "nickname": "意自形生1834",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/1040g2jo3143nmkno1m605odihk6k1hn2e1m3lb0?imageView2/2/w/120/format/jpg",
+                    "fstatus": "fans",
+                    "red_official_verify_type": 0
+                }
+            },
+            {
+                "score": 324669619,
+                "track_type": "6",
+                "liked": false,
+                "id": "324669619",
+                "type": "liked/item",
+                "title": "赞了你的笔记",
+                "time": 1733695115,
+                "user_info": {
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/1040g2jo3143nmkno1m605odihk6k1hn2e1m3lb0?imageView2/2/w/120/format/jpg",
+                    "fstatus": "fans",
+                    "red_official_verify_type": 0,
+                    "indicator": "你的粉丝",
+                    "xsec_token": "ABewATB3fFVsxgpAPGF75owL1mYs5jbzAtMX6ruEIKbwM=",
+                    "userid": "61b28d0d000000001000c6e2",
+                    "nickname": "意自形生1834"
+                },
+                "item_info": {
+                    "id": "673be5d10000000007035e47",
+                    "image": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o6g5nr30f2gbqtk04h23qg?imageView2/2/w/1080/format/jpg",
+                    "illegal_info": {
+                        "status": 0,
+                        "desc": "",
+                        "illegal_status": "NORMAL"
+                    },
+                    "link": "xhsdiscover://item/discovery.673be5d10000000007035e47?type=normal&sourceID=notifications&feedType=single",
+                    "user_info": {
+                        "userid": "5f6303c5000000000101ebb4",
+                        "nickname": "小红薯_",
+                        "image": "https://img.xiaohongshu.com/avatar/7121a416be8e543266fd62c1cc9d575e.jpg@120w_120h_92q_1e_1c_1x.jpg",
+                        "red_official_verify_type": 0
+                    },
+                    "type": "note_info",
+                    "status": 0,
+                    "xsec_token": "ABvMrrFvrVJdXvNL1rBhNXhlQdMqJ2bB0UBc1Z49uVkFk=",
+                    "image_info": {
+                        "width": 1280,
+                        "height": 1920,
+                        "url": "http://ci.xiaohongshu.com/1040g00831ab67ncq6o6g5nr30f2gbqtk04h23qg?imageView2/2/w/1080/format/jpg"
+                    }
+                },
+                "time_flag": 0
+            },
+            {
+                "liked": false,
+                "time_flag": 0,
+                "id": "324669590",
+                "title": "收藏了你的笔记",
+                "user_info": {
+                    "fstatus": "fans",
+                    "red_official_verify_type": 0,
+                    "indicator": "你的粉丝",
+                    "xsec_token": "ABewATB3fFVsxgpAPGF75owL1mYs5jbzAtMX6ruEIKbwM=",
+                    "userid": "61b28d0d000000001000c6e2",
+                    "nickname": "意自形生1834",
+                    "image": "https://sns-avatar-qc.xhscdn.com/avatar/1040g2jo3143nmkno1m605odihk6k1hn2e1m3lb0?imageView2/2/w/120/format/jpg"
+                },
+                "track_type": "4",
+                "type": "faved/item",
+                "time": 1733695065,
+                "score": 324669590,
+                "item_info": {
+                    "image": "http://ci.xiaohongshu.com/1040g2sg31agb8fmo6o1g5nr30f2gbqtkhrfrjdo?imageView2/2/w/1080/format/jpg",
+                    "illegal_info": {
+                        "desc": "",
+                        "illegal_status": "NORMAL",
+                        "status": 0
+                    },
+                    "extra_info": {
+                        "status": 1,
+                        "desc": "隐私专辑"
+                    },
+                    "content": "默认专辑",
+                    "id": "6248112f000000000101e907",
+                    "link": "xhsdiscover://item/discovery.6740299b00000000080046ab?type=normal&sourceID=notifications&feedType=single",
+                    "attach_item_info": {
+                        "image_info": {
+                            "url": "http://ci.xiaohongshu.com/1040g2sg31agb8fmo6o1g5nr30f2gbqtkhrfrjdo?imageView2/2/w/1080/format/jpg",
+                            "width": 1708,
+                            "height": 2560
+                        },
+                        "illegal_info": {
+                            "desc": "",
+                            "illegal_status": "NORMAL",
+                            "status": 0
+                        },
+                        "link": "xhsdiscover://item/discovery.6740299b00000000080046ab?type=normal&sourceID=notifications&feedType=single",
+                        "status": 0,
+                        "xsec_token": "LBEGeGyHCq-vJo7wZPoBrOwKUovofOiTCyVyEZCyz24FU=",
+                        "type": "note_info",
+                        "id": "6740299b00000000080046ab",
+                        "image": "http://ci.xiaohongshu.com/1040g2sg31agb8fmo6o1g5nr30f2gbqtkhrfrjdo?imageView2/2/w/1080/format/jpg"
+                    },
+                    "status": 0,
+                    "xsec_token": "ABpuym0PcQd35FOE78Wc1TrDYuh4HQFGgyuyT44NSUKug=",
+                    "type": "board_info"
+                }
+            }
+        ],
+        "has_more": true,
+        "cursor": 324669590,
+        "strCursor": "324669590"
+    },
+    "code": 0,
+    "success": true,
+    "msg": "成功"
+}
