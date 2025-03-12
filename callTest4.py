@@ -126,7 +126,7 @@ def paycodePicToCache():
     files = [file.name.replace(".jpg","") for file in folder_path.iterdir() if file.is_file()]
 
     print("文件夹内的文件有：", files) 
-    select_sql = "SELECT * FROM MarkWX" 
+    select_sql = "SELECT * FROM MarkWX WHERE PayCode<=0" 
     cursorsql.execute(select_sql)
     toupdateData=[]
     dataNode2 = cursorsql.fetchall()  
@@ -134,6 +134,7 @@ def paycodePicToCache():
         if(str(datanode[2]) in files):
             toupdateData.append((datanode[0],datanode[1],datanode[2],datanode[2]))
     for updateData in toupdateData: 
+        print(f"更新了 {str(updateData[2])}的为{str(updateData[3])}")
         update_sql = "UPDATE MarkWX SET PayCode = ? WHERE MarkID = ?"
         cursorsql.execute(update_sql, (updateData[3], updateData[2]))
         # 提交事务，将更改保存到数据库
@@ -146,6 +147,14 @@ def downloadPayCodePic():
     cursorsql.execute(select_sql)
     # 获取所有查询结果
     dataNode2 = cursorsql.fetchall()  
+    msgs = wx.GetAllMessage(
+        savepic   = True,   # 保存图片
+        savefile  = False,   # 保存文件
+        savevoice = False,    # 保存语音转文字内容
+        saveVideo=False,
+        saveZF=False,
+        odata=dataNode2
+    ) 
     # id=-1
     # savepath=""
     # if(odata!=None):
@@ -177,14 +186,6 @@ def downloadPayCodePic():
     #                 id=od[2]
     #                 break
     # 获取当前聊天窗口消息
-    msgs = wx.GetAllMessage(
-        savepic   = True,   # 保存图片
-        savefile  = False,   # 保存文件
-        savevoice = False,    # 保存语音转文字内容
-        saveVideo=False,
-        saveZF=False,
-        odata=dataNode2
-    ) 
 def updateWXtoXHS():
     #更新WXToXHSInfo的paycode，从markwx的paycode
     savepath=""
@@ -213,14 +214,68 @@ def updateWXtoXHS():
             cursorsql.execute(update_sql, (id, dn[0]))
             # 提交事务，将更改保存到数据库
             conn.commit()               
+def UpdateMarkFromLB():
+    #从窗口中的群成员信息添加到数据库，先点击群成员的某一个人，要定住那个群成员窗口
+
+    # update_sql = "UPDATE MarkWX SET PayCode = 0,MarkID=ID WHERE ID > 208"
+    # cursorsql.execute(update_sql)
+    # # 提交事务，将更改保存到数据库
+    # conn.commit()  
+
+    conn = sqlite3.connect('config\\WorkData.db')             
+    global cursorsql,sht,wb
+    cursorsql = conn.cursor() 
+    uapi=wx.UiaAPI.ListControl(Name="聊天成员")
+    uapic=uapi.GetChildren()
+
+    select_sql = "SELECT * FROM MarkWX" 
+    cursorsql.execute(select_sql)
+    # 获取所有查询结果
+    odata = cursorsql.fetchall()  
+    savepath=""
+
+    for uc in uapic:
+        name=uc.Name 
+        id=-1
+        for od in odata:
+            if(od[4]==name):
+                id=od[0]
+                break
+        # if(id==-1):
+        #     for od in odata:
+        #         if((od[1] in name or name in od[1])):
+        #             id=od[0]
+        #             break
+        if(id!=-1):
+        #     update_sql = "UPDATE MarkWX SET OriginName = ? WHERE ID = ?"
+        #     cursorsql.execute(update_sql, (name,id))
+        #     # 提交事务，将更改保存到数据库
+        #     conn.commit()  
+        # else:
+            MarkID=(odata[-1][0]+1 if cursorsql.lastrowid==0 else cursorsql.lastrowid) 
+            print(f"更新了{name}，他MarkID是{MarkID}")
+            insert_single_sql = '''INSERT INTO MarkWX (wxName ,MarkID ,PayCode,OriginName,AddTime)
+            VALUES (?, ?,?,?,?)'''  
+            cursorsql.execute(insert_single_sql, (name,MarkID,0,name,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
+            # 提交事务，将更改保存到数据库
+            conn.commit()  
+            
 #------------------------------------------------------处理从聊天框获取支付码的图片
+
+
 priceZ=1
 priceC=0.5
-priceP=0.5    
-conn = sqlite3.connect('config\\WorkData.db')
+priceP=0.5     
+wx = WeChat()
+conn = sqlite3.connect('config\\WorkData.db')             
 global cursorsql,sht,wb
-cursorsql = conn.cursor() 
-updateWXtoXHS()
+cursorsql = conn.cursor()  
+downloadPayCodePic()
+paycodePicToCache() 
+
+
+
+# updateWXtoXHS()
 
 
 dsf=1

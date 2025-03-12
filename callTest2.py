@@ -147,14 +147,20 @@ def InsertWXToXHScache(infos):
                 find=True
                 break
         if(find==False):
-            toinsertInfo.append(info)
+            findInToInsert=False
+            for toinsert in toinsertInfo:
+                if(toinsert[1]==info[0] and (toinsert[2] in info[1] or info[1] in toinsert[2])):
+                    findInToInsert=True
+                    break
+            if(findInToInsert==False):
+                toinsertInfo.append(info)
+                print(f"增加了{info[0]}他备注为{info[3]}")
 
      
     # 定义插入单条数据的 SQL 语句datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     insert_single_sql = '''INSERT INTO WXToXHSInfo (wxID ,xhsID ,AddTime,MarkID,PayCode)
      VALUES (?, ?,?,?,?)'''      
     cursorsql.executemany(insert_single_sql, toinsertInfo)
-
     # # 定义插入多条数据的 SQL 语句
     # insert_multiple_sql = "INSERT INTO users (name, age) VALUES (?, ?)"
     # # 要插入的多条数据
@@ -171,10 +177,10 @@ def InsertXML(infos):
     global sht,wb 
     wxdata=[{}]#[{"wx":"wx用户名"，"xhs":"xhs用户名","z":"1","C":"1","P":"0","sp":"视频证明地址"}]
     # 将a1,a2,a3输入第一列，b1,b2,b3输入第二列
-    sht.range('A1') .value=['微信用户名','备注号' ,"支付金额","支付码图"] 
+    sht.range('A1') .value=['微信用户名','备注号' ,"支付金额","支付码图","金额计算过程","操作账号个数"] 
     i=2
     for info in infos: 
-        sht.range(f'A{i}') .value=list((info[0],info[1],info[2]))
+        sht.range(f'A{i}') .value=list((info[0],info[1],info[2],info[3],info[4],info[5]))
         path=f'config\\zfcode\\{int(info[3])}.jpg'
         if(os.path.exists(path)):
             filePath = os.path.join(os.getcwd(),path )
@@ -184,9 +190,10 @@ def InsertXML(infos):
     wb.save(f'Result\\结算{datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}.xls')
     wb.close()
 if __name__ == '__main__':
-    try:  
+    try: 
+        breakText=None 
         priceZ=1
-        priceC=0.5
+        priceC=0
         priceP=0.5    
         wx = WeChat()
         conn = sqlite3.connect('config\\WorkData.db')
@@ -209,6 +216,7 @@ if __name__ == '__main__':
             if msg.type == 'sys':
                 print(f'【系统消息】{msg.content}')
             elif msg.type == 'friend':
+                if(breakText!=None and msg.content==breakText):break
                 sender = msg.sender # 这里可以将msg.sender改为msg.sender_remark，获取备注名
                 if(msg.myType=="[图片]" or msg.myType=="[文件]" or msg.myType=="[语音]" or msg.myType=="[已收款]"
                    or msg.sender=="Bb" or msg.sender=="馨"):
@@ -285,10 +293,12 @@ if __name__ == '__main__':
                 print(f'{msg.sender.ljust(20)}：{msg.content}')
             
             elif msg.type == 'time':
+                if(breakText!=None and msg.content==breakText):break
                 pass#print(f'\n【时间消息】{msg.time}')
 
             elif msg.type == 'recall':
-                print(f'【撤回消息】{msg.content}')
+                pass
+                #print(f'【撤回消息】{msg.content}')
 
         select_sql = "SELECT * FROM MarkWX" 
         cursorsql.execute(select_sql)
@@ -318,18 +328,21 @@ if __name__ == '__main__':
         for infosToSave1 in infosToSave:
             toInsertSqllite.append((infosToSave1["wxID"],infosToSave1["xhsID"],infosToSave1["IsZ"],infosToSave1["IsC"],infosToSave1["IsP"],infosToSave1["ZhengMing"],
                                     infosToSave1["IsConfirm"],infosToSave1["IsPay"],datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S"),infosToSave1["content"]))
-            if(infosToSave1["wxID"]!="姜可艾 没有结算完"):
+            if(infosToSave1["wxID"]!="姜可艾 没有结算完" and infosToSave1["wxID"]!="姜可艾"):
                 toInsertSqlliteWXXHS.append((infosToSave1["wxID"],infosToSave1["xhsID"],datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),infosToSave1["MarkID"],infosToSave1["PayCode"])) 
             payAmount=infosToSave1["IsZ"]*priceZ+infosToSave1["IsC"]*priceC+infosToSave1["IsP"]*priceP
-            
+            payLoad=f"{str(infosToSave1['IsZ'])}*{str(priceZ)}+{str(infosToSave1['IsC'])}*{str(priceC)}+{str(infosToSave1['IsP'])}*{str(priceP)}"
             find=False 
             for info in toInsertXML:
                 if(infosToSave1["wxID"]==info[0]):
                     info[2]+=payAmount
+                    info[4]+=("_"+payLoad+"_")
+                    maxC=max(infosToSave1['IsZ'],infosToSave1['IsC'],infosToSave1['IsP'])
+                    info[5]+=(1 if maxC<=1 else maxC)
                     find=True
                     break
             if(find==False):
-                toInsertXML.append([infosToSave1["wxID"],infosToSave1["MarkID"],payAmount,infosToSave1["PayCode"]])
+                toInsertXML.append([infosToSave1["wxID"],infosToSave1["MarkID"],payAmount,infosToSave1["PayCode"],payLoad,1])
         InsertWXToXHScache(toInsertSqlliteWXXHS)
         InsertWXInfoTocache(toInsertSqllite) 
         app = xw.App(visible=False, add_book=False)

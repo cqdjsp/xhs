@@ -101,40 +101,70 @@ def InsertXML(infos):
     wb.save(f'Result\\微信信息{datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}.xls')
     wb.close()
     
+def FindPayID(infosToSave):
+    select_sql = "SELECT * FROM MarkWX" 
+    cursorsql.execute(select_sql)
+    # 获取所有查询结果
+    dataNode2 = cursorsql.fetchall()   
+    #--------------直接通过原始微信名找
+    for info in infosToSave:
+        info ["MarkID"]=0   
+        info ["PayCode"]=0   
+        for dn2 in dataNode2:
+                if(dn2[4] == info["wxID"] ):
+                    info ["MarkID"]=dn2[2]
+                    info ["PayCode"]=dn2[3] 
+                    break  
 
-priceZ=1
-priceC=0.5
-priceP=0.5    
-wx = WeChat()
-conn = sqlite3.connect('config\\WorkData.db')
-global cursorsql,sht,wb
-cursorsql = conn.cursor()
-myconf=uia.WindowControl(ClassName='ChatRecordWnd', searchDepth=1)
-ddsd2=myconf.GetChildren()
-ds2=ddsd2[1].ListControl()
-msgs = []
-infosToSave=[]
-canload=True
-while(canload):
-    msgitems2=ds2.GetChildren()
-    for MsgItem2 in msgitems2:
-        if MsgItem2.ControlTypeName == 'ListItemControl' :
-                if(MsgItem2.Name!="" and "[图片]" not in MsgItem2.Name):
-                    textbox1=MsgItem2.TextControl(searchDepth=10,foundIndex=1)
-                    textbox2=MsgItem2.TextControl(searchDepth=10,foundIndex=2)
-                    textbox3=MsgItem2.TextControl(searchDepth=10,foundIndex=3)
-                    msgs.append({"type":"text","sender":textbox1.Name,"content":textbox3.Name,"time":textbox2.Name,"msg":MsgItem2.Name})
-    canload= LoadMoreMessage(ds2)
-    time.sleep(1)
-
-
-    try:
+#-----------通过可读的自己备注的微信名找
+    # for info in infosToSave:
+    #     info ["MarkID"]=0   
+    #     info ["PayCode"]=0   
+    #     for dn2 in dataNode2:
+    #             if(dn2[1] == info["wxID"] ):
+    #                 info ["MarkID"]=dn2[2]
+    #                 info ["PayCode"]=dn2[3] 
+    #                 break          
+    # for info in infosToSave:
+    #     if(info ["MarkID"]!=0):
+    #         continue
+    #     for dn2 in dataNode2:
+    #             if((dn2[1] in info["wxID"] or info["wxID"] in dn2[1])):
+    #                 info ["MarkID"]=dn2[2]
+    #                 info ["PayCode"]=dn2[3] 
+    #                 break  
+if __name__ == '__main__':
+    try:     
+        priceZ=1
+        priceC=0.5
+        priceP=0.5    
+        wx = WeChat()
+        conn = sqlite3.connect('config\\WorkData.db')
+        global cursorsql,sht,wb
+        cursorsql = conn.cursor()
+        myconf=uia.WindowControl(ClassName='ChatRecordWnd', searchDepth=1)
+        ddsd2=myconf.GetChildren()
+        ds2=ddsd2[1].ListControl()
+        msgs = []
+        infosToSave=[]
+        canload=True
+        while(canload):
+            msgitems2=ds2.GetChildren()
+            for MsgItem2 in msgitems2:
+                if MsgItem2.ControlTypeName == 'ListItemControl' :
+                        if(MsgItem2.Name!="" and "[图片]" not in MsgItem2.Name):
+                            textbox1=MsgItem2.TextControl(searchDepth=10,foundIndex=1)
+                            textbox2=MsgItem2.TextControl(searchDepth=10,foundIndex=2)
+                            textbox3=MsgItem2.TextControl(searchDepth=10,foundIndex=3)
+                            msgs.append({"type":"text","sender":textbox1.Name,"content":textbox3.Name,"time":textbox2.Name,"msg":MsgItem2.Name})
+            canload= LoadMoreMessage(ds2)
+            time.sleep(1) 
         # 输出消息内容
         for msg in msgs: 
             sender = msg["sender"] # 这里可以将msg.sender改为msg.sender_remark，获取备注名
             content=msg["content"]
             myType=msg["type"]
-            if(  sender=="Bb" or sender=="馨"):
+            if(  sender=="Bb" or sender=="馨" or sender=="cqdjsp平"):
                 continue
             if(myType=="[聊天记录]"):
                 pass
@@ -157,14 +187,14 @@ while(canload):
             else: 
                 infossaveeone={}
                 find=False
-                xhsID=content.replace("@姜可艾 没有结算完","_").replace("赞","_").replace("藏","_")
+                xhsID=content.replace("@姜可艾 ","_").replace("@姜可艾 没有结算完","_").replace("赞","_").replace("藏","_")
                 if(myType=="[视频]"):
                     for infosave in reversed(infosToSave): 
                         if(infosave["wxID"]==sender and infosave["ZhengMing"]==""):
                             infossaveeone=infosave
                             find=True                        
                             break
-                elif(content.find("@姜可艾 没有结算完")>-1):
+                elif(content.find("@姜可艾 没有结算完")>-1 or content.find("@姜可艾 ")>-1):
                     for infosave in infosToSave:
                         if((infosave["wxID"]==sender and infosave["ZhengMing"]!="" and infosave["xhsID"]=="")):
                                 infossaveeone=infosave
@@ -186,7 +216,7 @@ while(canload):
                 if(myType=="[视频]"): 
                     infossaveeone["ZhengMing"]=content
                 else:  
-                    if(content.find("@姜可艾 没有结算完")>-1):
+                    if(content.find("@姜可艾 没有结算完")>-1 or content.find("@姜可艾 ")>-1):
                         cs=1
                         if(content.find("2组赞藏")>-1 or content.find("两组赞藏")>-1):
                             cs=2
@@ -198,36 +228,15 @@ while(canload):
                             infossaveeone["IsC"]=1*cs
                         if(content.find("评")>-1):
                             infossaveeone["IsP"]=1*cs
-                        infossaveeone["xhsID"]=   content.replace("@姜可艾 没有结算完","_").replace("赞","_").replace("藏","_") 
+                        infossaveeone["xhsID"]=   content.replace("@姜可艾 ","_").replace("@姜可艾 没有结算完","_").replace("赞","_").replace("藏","_") 
                         infossaveeone["content"]=content
                 if(find==False):
                     infosToSave.append(infossaveeone)
                 #print(f'{sender.rjust(20)}：{msg.content}')
 
  
-
-        select_sql = "SELECT * FROM MarkWX" 
-        cursorsql.execute(select_sql)
-        # 获取所有查询结果
-        dataNode2 = cursorsql.fetchall()   
-        #先找微信名与数据库完全一样的，因为有的微信名包含在别人微信名里  
-        for info in infosToSave:
-            info ["MarkID"]=0   
-            info ["PayCode"]=0   
-            for dn2 in dataNode2:
-                    if(dn2[1] == info["wxID"] ):
-                        info ["MarkID"]=dn2[2]
-                        info ["PayCode"]=dn2[3] 
-                        break          
-        for info in infosToSave:
-            if(info ["MarkID"]!=0):
-                continue
-            for dn2 in dataNode2:
-                    if((dn2[1] in info["wxID"] or info["wxID"] in dn2[1])):
-                        info ["MarkID"]=dn2[2]
-                        info ["PayCode"]=dn2[3] 
-                        break   
-
+        FindPayID(infosToSave)
+ 
         toInsertSqlliteWXXHS=[]
         toInsertSqllite=[]
         toInsertXML=[]
