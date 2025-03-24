@@ -263,18 +263,42 @@ def UpdateMarkFromLB():
 #------------------------------------------------------处理从聊天框获取支付码的图片
 
 
-priceZ=1
-priceC=0.5
-priceP=0.5     
-wx = WeChat()
-conn = sqlite3.connect('config\\WorkData.db')             
-global cursorsql,sht,wb
-cursorsql = conn.cursor()  
-downloadPayCodePic()
-paycodePicToCache() 
+# priceZ=1
+# priceC=0.5
+# priceP=0.5     
+# wx = WeChat()
+# conn = sqlite3.connect('config\\WorkData.db')             
+# global cursorsql,sht,wb
+# cursorsql = conn.cursor()  
+# downloadPayCodePic()
+# paycodePicToCache() 
+
+def remove_chars_around_colon(s):
+    colon_index = s.find(':')
+    if colon_index == -1:
+        return s
+
+    left_index = colon_index - 1
+    left_count = 0
+    # 向左查找最多两个数字
+    while left_index >= 0 and left_count < 2 and s[left_index].isdigit():
+        left_index -= 1
+        left_count += 1
+
+    right_index = colon_index + 1
+    right_count = 0
+    # 向右查找最多两个数字
+    while right_index < len(s) and right_count < 2 and s[right_index].isdigit():
+        right_index += 1
+        right_count += 1
+
+    # 拼接结果
+    return s[:left_index + 1] + s[right_index:]
 
 
-
+test_strings = ["123:456", "s1:2y45","01:2io","dd1:0"]
+for s in test_strings:
+    print(remove_chars_around_colon(s))
 # updateWXtoXHS()
 
 

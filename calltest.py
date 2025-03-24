@@ -16,6 +16,7 @@ import os
 import xlwings as xw
 from PIL import Image
 import sqlite3 
+import traceback
 
 def add_center(sht, target, filePath, match=False, width=None, height=None, column_width=None, row_height=None):
     '''Excel智能居中插入图片
@@ -127,7 +128,7 @@ def GetInfoBySeq(catchlike,catchMention):
     # 定义查询数据的 SQL 语句
     select_sql = "SELECT * FROM NodeTextInfo"
     # 执行查询语句
-    global cursorsql
+    global cursorsql,noteToCal,endtimes
     cursorsql.execute(select_sql)
     # 获取所有查询结果
     dataNode = cursorsql.fetchall()
@@ -141,9 +142,27 @@ def GetInfoBySeq(catchlike,catchMention):
         #note = xhs_client.get_note_by_id_from_html("67afecdf0000000028028c36","ABMuGHPzkrF3_R-x2Hv5gsctdOl93DbPpH4QcpptsADdg=")#,
         #print(json.dumps(note, indent=4))
         #print(help.get(note))
+        findendtime=False#找到停止的时间也不再找了。退出while
+        incurrectDay=False
         for noteInfo in note['message_list']:
-            if( noteInfo['type'] in handleType ):
+            incurrectDay=False
+            for endtime in endtimes: 
+                if datetime.datetime.fromtimestamp(noteInfo['time']).date()!=endtime.date():
+                    if datetime.datetime.fromtimestamp(noteInfo['time'])<endtime:
+                        findendtime=True
+                        break 
+                    else:
+                        continue  
+                else:
+                    incurrectDay=True
+                    break
+             
+            if(findendtime):break
+            if(incurrectDay==False):continue
+            if( noteInfo['type'] in handleType):
                     noteID=noteInfo['item_info']['id'] if 'liked/item' ==noteInfo['type'] else noteInfo['item_info']["attach_item_info"]["id"] 
+                    if(noteID not in  noteToCal):
+                        continue
                     noteSec=noteInfo['item_info']['xsec_token'] if 'liked/item' ==noteInfo['type'] else noteInfo['item_info']["attach_item_info"]["xsec_token"] 
                     find=False
                     for notedatacache in dataNode:
@@ -153,7 +172,8 @@ def GetInfoBySeq(catchlike,catchMention):
                             break
                     if(find==False):
                         noteinfoSWeb=xhs_client.get_note_by_id(noteID,noteSec)
-                        InsertNoteInfoTocache(noteID,noteSec,noteinfoSWeb["user"]["user_id"],noteinfoSWeb["user"]["nickname"],noteinfoSWeb["title"],noteinfoSWeb["desc"],datetime.datetime.fromtimestamp(noteinfoSWeb['time']/1000).strftime("%Y-%m-%d %H:%M:%S"),int(noteinfoSWeb["interact_info"]["liked_count"]),int(noteinfoSWeb["interact_info"]["collected_count"]),int(noteinfoSWeb["interact_info"]["comment_count"]),int(noteinfoSWeb["interact_info"]["share_count"]))
+                        InsertNoteInfoTocache(noteID,noteSec,noteinfoSWeb["user"]["user_id"],noteinfoSWeb["user"]["nickname"],noteinfoSWeb["title"],noteinfoSWeb["desc"],datetime.datetime.fromtimestamp(noteinfoSWeb['time']/1000).strftime("%Y-%m-%d %H:%M:%S"),
+                                              int(noteinfoSWeb["interact_info"]["liked_count"]),int(noteinfoSWeb["interact_info"]["collected_count"]),int(noteinfoSWeb["interact_info"]["comment_count"]),int(noteinfoSWeb["interact_info"]["share_count"]),noteInfo['item_info']['image'])
                         noteinfoTitle=noteinfoSWeb["title"]
                         cursorsql.execute(select_sql)
                         # 获取所有查询结果
@@ -162,52 +182,71 @@ def GetInfoBySeq(catchlike,catchMention):
                                 "作者":noteInfo['item_info']['user_info']["userid"] if  'user_info' in noteInfo['item_info'] else "",
                                 '操作人ID':noteInfo["user_info"]['userid'], '操作人昵称':noteInfo["user_info"]['nickname'],'操作人头像':noteInfo["user_info"]['image'],
                                 '操作类型':handleType[noteInfo['type']],'操作时间':datetime.datetime.fromtimestamp(noteInfo['time']).strftime("%Y-%m-%d %H:%M:%S"),'价格':handleTypePrice[noteInfo['type']],
-                                '操作ID': str(noteInfo['time']) +'_'+noteInfo['id']
+                                '评论内容': "",'操作ID': str(noteInfo['time']) +'_'+noteInfo['id']
                             }  )
-                    
-                    
+        if(findendtime): break    
         catchlike-=20
         cursor=note['strCursor']  
         if(note["has_more"]==False):break  
-        sleep(random.randint(1, 4))
+        sleep(random.randint(1, 3))
     cursor=""
     while(catchMention>0):
         mentionNote=  xhs_client.get_mention_notifications(20,cursor)
-        for noteInfo in mentionNote['message_list']:
-            if( noteInfo['type'] in handleType and 'target_comment' not in noteInfo['comment_info'] and remove_brackets_content(noteInfo['comment_info']["content"])!="" ):
-                    noteID=noteInfo['item_info']['id'] if 'id' in noteInfo['item_info'] else ""
-                    noteSec=noteInfo['item_info']['xsec_token'] if 'xsec_token' in noteInfo['item_info'] else ""
-                    find=False
-                    for notedatacache in dataNode:
-                        if(notedatacache[1]==noteID):
-                            noteinfoTitle=notedatacache[5]
-                            find=True
-                            break
-                    if(find==False):
-                        noteinfoSWeb=xhs_client.get_note_by_id(noteID,noteSec)
-                        InsertNoteInfoTocache(noteID,noteSec,noteinfoSWeb["user"]["user_id"],noteinfoSWeb["user"]["nickname"],noteinfoSWeb["title"],noteinfoSWeb["desc"],datetime.datetime.fromtimestamp(noteinfoSWeb['time']/1000).strftime("%Y-%m-%d %H:%M:%S"),int(noteinfoSWeb["interact_info"]["liked_count"]),int(noteinfoSWeb["interact_info"]["collected_count"]),int(noteinfoSWeb["interact_info"]["comment_count"]),int(noteinfoSWeb["interact_info"]["share_count"]))
-                        noteinfoTitle=noteinfoSWeb["title"]
-                        cursorsql.execute(select_sql)
-                        # 获取所有查询结果
-                        dataNode = cursorsql.fetchall()
-                    data.append({"预览图":noteInfo['item_info']['image'],"篇":noteID,"篇title":noteinfoTitle,
-                                "作者":noteInfo['item_info']['user_info']["userid"] if  'user_info' in noteInfo['item_info'] else "",
-                                '操作人ID':noteInfo["user_info"]['userid'], '操作人昵称':noteInfo["user_info"]['nickname'],'操作人头像':noteInfo["user_info"]['image'],
-                                '操作类型':handleType[noteInfo['type']],'操作时间':datetime.datetime.fromtimestamp(noteInfo['time']).strftime("%Y-%m-%d %H:%M:%S"),'价格':handleTypePrice[noteInfo['type']],
-                                '评论内容': noteInfo['comment_info']["content"],'操作ID': noteInfo['comment_info']["id"]
-                            }  )
+        findendtime=False#找到停止的时间也不再找了。退出while
+        for noteInfo in mentionNote['message_list'] :
+            incurrectDay=False
+            for endtime in endtimes: 
+                if datetime.datetime.fromtimestamp(noteInfo['time']).date()!=endtime.date():
+                    if datetime.datetime.fromtimestamp(noteInfo['time'])<endtime:
+                        findendtime=True
+                        break 
+                    else:
+                        continue  
+                else:
+                    incurrectDay=True
+                    break
+             
+            if(findendtime):break
+            if(incurrectDay==False):continue
+            if( noteInfo['type'] in handleType and 'target_comment' not in noteInfo['comment_info']  and remove_brackets_content(noteInfo['comment_info']["content"])!="" ):
+                noteID=noteInfo['item_info']['id'] if 'id' in noteInfo['item_info'] else ""
+                if( noteID not in  noteToCal ):
+                    continue
+              
+                noteSec=noteInfo['item_info']['xsec_token'] if 'xsec_token' in noteInfo['item_info'] else ""
+                find=False
+                for notedatacache in dataNode:
+                    if(notedatacache[1]==noteID):
+                        noteinfoTitle=notedatacache[5]
+                        find=True
+                        break
+                if(find==False):
+                    noteinfoSWeb=xhs_client.get_note_by_id(noteID,noteSec)
+                    InsertNoteInfoTocache(noteID,noteSec,noteinfoSWeb["user"]["user_id"],noteinfoSWeb["user"]["nickname"],noteinfoSWeb["title"],noteinfoSWeb["desc"],datetime.datetime.fromtimestamp(noteinfoSWeb['time']/1000).strftime("%Y-%m-%d %H:%M:%S"),
+                                            int(noteinfoSWeb["interact_info"]["liked_count"]),int(noteinfoSWeb["interact_info"]["collected_count"]),int(noteinfoSWeb["interact_info"]["comment_count"]),int(noteinfoSWeb["interact_info"]["share_count"]),noteInfo['item_info']['image'])
+                    noteinfoTitle=noteinfoSWeb["title"]
+                    cursorsql.execute(select_sql)
+                    # 获取所有查询结果
+                    dataNode = cursorsql.fetchall()
+                data.append({"预览图":noteInfo['item_info']['image'],"篇":noteID,"篇title":noteinfoTitle,
+                            "作者":noteInfo['item_info']['user_info']["userid"] if  'user_info' in noteInfo['item_info'] else "",
+                            '操作人ID':noteInfo["user_info"]['userid'], '操作人昵称':noteInfo["user_info"]['nickname'],'操作人头像':noteInfo["user_info"]['image'],
+                            '操作类型':handleType[noteInfo['type']],'操作时间':datetime.datetime.fromtimestamp(noteInfo['time']).strftime("%Y-%m-%d %H:%M:%S"),'价格':handleTypePrice[noteInfo['type']],
+                            '评论内容': noteInfo['comment_info']["content"],'操作ID': noteInfo['comment_info']["id"]
+                        }  )
+        if(findendtime): break 
         catchMention-=20
-        cursor=note['strCursor']  
-        if(note["has_more"]==False):break  
+        cursor=mentionNote['strCursor']  
+        if(mentionNote["has_more"]==False):break  
         sleep(random.randint(1, 3))
     return data
-def InsertNoteInfoTocache(note_id ,xsec_token ,user_id , nickname="", title="", desc="" , time="" ,likecount=0 ,collectedcount=0, commentcount=0 ,sharecount=0):
+def InsertNoteInfoTocache(note_id ,xsec_token ,user_id , nickname="", title="", desc="" , time="" ,likecount=0 ,collectedcount=0, commentcount=0 ,sharecount=0,image=""):
     global cursorsql
     # 定义插入单条数据的 SQL 语句
-    insert_single_sql = '''INSERT INTO NodeTextInfo (note_id ,xsec_token ,user_id , nickname, title, desc , time ,likecount ,collectedcount, commentcount ,sharecount)
-     VALUES (?, ?,?,?, ?,?,?, ?,?,?, ?)'''
+    insert_single_sql = '''INSERT INTO NodeTextInfo (note_id ,xsec_token ,user_id , nickname, title, desc , time ,likecount ,collectedcount, commentcount ,sharecount,image)
+     VALUES (?, ?,?,?, ?,?,?, ?,?,?, ?,?)'''
     # 插入单条数据
-    cursorsql.execute(insert_single_sql, (note_id ,xsec_token ,user_id , nickname, title, desc , time ,likecount ,collectedcount, commentcount ,sharecount))
+    cursorsql.execute(insert_single_sql, (note_id ,xsec_token ,user_id , nickname, title, desc , time ,likecount ,collectedcount, commentcount ,sharecount,image))
 
     # # 定义插入多条数据的 SQL 语句
     # insert_multiple_sql = "INSERT INTO users (name, age) VALUES (?, ?)"
@@ -221,14 +260,39 @@ def InsertNoteInfoTocache(note_id ,xsec_token ,user_id , nickname="", title="", 
 
     # 提交事务，将更改保存到数据库
     conn.commit()
+def InsertNoteHandleTocache( datas):
+    global cursorsql
+    # 定义插入单条数据的 SQL 语句
+    insert_single_sql = '''INSERT INTO NodeHandleInfo (noteID ,handleUserID , handleUserName, handleUserImage, handleType , handleTime ,mentionContent ,status,addtime)
+     VALUES (?,?,?,?,?,?,?,?,?)'''
+    toinsert=[]
+    for data in datas:
+        toinsert.append((data["篇"] , data["操作人ID"] ,data["操作人昵称"] ,data["操作人头像"],data["操作类型"],data["操作时间"],data["评论内容"],1,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
+    # 插入单条数据
+    cursorsql.executemany(insert_single_sql, toinsert)
 
+    # # 定义插入多条数据的 SQL 语句
+    # insert_multiple_sql = "INSERT INTO users (name, age) VALUES (?, ?)"
+    # # 要插入的多条数据
+    # data = [
+    #     ('Bob', 30),
+    #     ('Charlie', 35)
+    # ]
+    # # 批量插入数据
+    # cursor.executemany(insert_multiple_sql, data)
+
+    # 提交事务，将更改保存到数据库
+    conn.commit()
 if __name__ == '__main__':
     try:  
-        cookie = "abRequestId=b1a8204b-f169-5ac9-a240-d7e76f92e284; a1=192bd6bf1cfstrjudljds60zw3ua7ycqcd1hniisp50000115806; webId=aa08832c525b96208379fb35dcbb81eb; gid=yj2yJ8S4q0SjyjJDfKDiyf33SiM9FV7f1VfMyMUK8uEq7x280WvSAI888yy2Y8K820iSyWdi; webBuild=4.57.0; x-user-id-creator.xiaohongshu.com=6649eba4000000000d0254cd; customerClientId=244158184254652; customer-sso-sid=68c517473327474294507721ead396574909caab; access-token-creator.xiaohongshu.com=customer.creator.AT-68c517473327474294336871falud8fmecdtl0kl; galaxy_creator_session_id=vkGmDW3N11pOMMAOEiFNwrTTAT3diXO8XfED; galaxy.creator.beaker.session.id=1740019646207039144021; xsecappid=xhs-pc-web; web_session=0400698e17408d57bbe215518d354b80b586f1; unread={%22ub%22:%2267a358cb0000000029008178%22%2C%22ue%22:%2267a1ff27000000002900ae99%22%2C%22uc%22:10}; loadts=1740119597007; acw_tc=0ad581e517401248545863356e2999e3a3aff7056eec4681a9cc5442029720; websectiga=7750c37de43b7be9de8ed9ff8ea0e576519e8cd2157322eb972ecb429a7735d4; sec_poison_id=0b175934-28e0-4344-a107-544a6ed899ad"
-        catchlike=20#获取100个赞藏数据
-        catchMention=20#获取100个评论数据
-        file_path="Result\\"+datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+"Detail.csv"
         global xhs_client
+        global handleType,noteToCal,endtimes
+        cookie = "abRequestId=b1a8204b-f169-5ac9-a240-d7e76f92e284; a1=192bd6bf1cfstrjudljds60zw3ua7ycqcd1hniisp50000115806; webId=aa08832c525b96208379fb35dcbb81eb; gid=yj2yJ8S4q0SjyjJDfKDiyf33SiM9FV7f1VfMyMUK8uEq7x280WvSAI888yy2Y8K820iSyWdi; x-user-id-creator.xiaohongshu.com=6649eba4000000000d0254cd; customerClientId=244158184254652; access-token-creator.xiaohongshu.com=customer.creator.AT-68c517473327474294336871falud8fmecdtl0kl; galaxy_creator_session_id=vkGmDW3N11pOMMAOEiFNwrTTAT3diXO8XfED; galaxy.creator.beaker.session.id=1740019646207039144021; xsecappid=xhs-pc-web; webBuild=4.60.1; web_session=04006979478696029c2ce88fed354bd9723a03; unread={%22ub%22:%2267d37e04000000001c00d16c%22%2C%22ue%22:%2267d8074a000000000602ae7b%22%2C%22uc%22:16}; websectiga=984412fef754c018e472127b8effd174be8a5d51061c991aadd200c69a2801d6; sec_poison_id=598e0daa-8814-40f0-b0e2-cd8f745be798; loadts=1742269363475"
+        catchlike=2000#获取100个赞藏数据
+        catchMention=300#获取100个评论数据
+        noteToCal=["","67d930db000000000d016ae5"]#,"67d546e200000000060284cb"
+        endtimes=[datetime.date(2025, 3, 21),datetime.date(2025, 3, 22)]
+        #file_path="Result\\"+datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+"Detail.csv"
         xhs_client = XhsClient(cookie, sign=sign)
         # 连接到 SQLite 数据库，如果数据库文件不存在则会创建一个新的数据库文件
         conn = sqlite3.connect('config\\WorkData.db')
@@ -260,98 +324,98 @@ if __name__ == '__main__':
 
 
         print(datetime.datetime.now())
-        global handleType
-        handleType={'faved/item':'收藏','liked/item':'赞',"comment/comment":'评论评论',"comment/item":'评论'}#"mention/item":'在笔记中@了你'
+        handleType={'faved/item':'收藏','liked/item':'赞',"comment/comment":'评论评论',"comment/item":'评论'}#"mention/item":'在笔记中@了你''liked/comment':赞了你的评论
         handleTypePrice={'faved/item':0.5,'liked/item':1,"comment/comment":0,"comment/item":0.5}
         fieldnames = ['操作ID','预览图','篇','篇title','作者','操作人ID','操作人昵称','操作人头像','操作类型',  '操作时间','评论内容','价格']
-        noteToCal=["67afecdf0000000028028c36"]
         data =GetInfoBySeq(catchlike,catchMention)
-        dataread=[]
-       
-        if os.path.exists(file_path): 
-            with open(file_path, mode='r', newline='', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                dataread = list(reader)
-            if(len(dataread)>0):  
-                with open(file_path, mode='a', newline='', encoding='utf-8') as file:
-                    writer = csv.DictWriter(file, fieldnames=fieldnames) 
-                    for toaddData in data:
-                        existData=False
-                        for datareadInfo in dataread:
-                            if('操作ID' in datareadInfo and toaddData['操作ID']  ==datareadInfo['操作ID']):
-                                existData=True
-                                break
-                        if(existData==False):
-                            writer.writerow(toaddData)
-            else: 
-                with open(file_path, mode='w', newline='', encoding='utf-8') as file:
-                    writer = csv.DictWriter(file, fieldnames=fieldnames)
-                    writer.writeheader()
-                    writer.writerows(data)                        
-        else:
-            with open(file_path, mode='x', newline='', encoding='utf-8') as file:
-                writer = csv.DictWriter(file, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(data)   
+        InsertNoteHandleTocache(data)
 
-        with open(file_path, mode='r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            dataread = list(reader)
-        handuserPrice={}
-        handuserNicName={}
-        handuserPriceToAdd=[]
-        datareadCode=[]
-        paycode={}
-        with open('config//IDToPayCode.csv', mode='r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            datareadCode = list(reader)
-        if(len(dataread)>0):
-            for dataInfo in dataread: 
-                paycodeSet=""
-                for datas in datareadCode:
-                    if(datas["ID"]==dataInfo["操作人ID"]):
-                        paycodeSet=datas["支付码ID"]
-                        break
-                paycode[dataInfo["操作人ID"] ]=paycodeSet
-                if( dataInfo["操作人ID"]  in handuserPrice):
-                    handuserPrice[dataInfo["操作人ID"] ]+=float(dataInfo['价格'])
-                else:
-                    handuserPrice[dataInfo["操作人ID"] ]=float(dataInfo['价格'])
-                    handuserNicName[dataInfo["操作人ID"] ]=dataInfo['操作人昵称']
+        #dataread=[]
+        # if os.path.exists(file_path): 
+        #     with open(file_path, mode='r', newline='', encoding='utf-8') as file:
+        #         reader = csv.DictReader(file)
+        #         dataread = list(reader)
+        #     if(len(dataread)>0):  
+        #         with open(file_path, mode='a', newline='', encoding='utf-8') as file:
+        #             writer = csv.DictWriter(file, fieldnames=fieldnames) 
+        #             for toaddData in data:
+        #                 existData=False
+        #                 for datareadInfo in dataread:
+        #                     if('操作ID' in datareadInfo and toaddData['操作ID']  ==datareadInfo['操作ID']):
+        #                         existData=True
+        #                         break
+        #                 if(existData==False):
+        #                     writer.writerow(toaddData)
+        #     else: 
+        #         with open(file_path, mode='w', newline='', encoding='utf-8') as file:
+        #             writer = csv.DictWriter(file, fieldnames=fieldnames)
+        #             writer.writeheader()
+        #             writer.writerows(data)                        
+        # else:
+        #     with open(file_path, mode='x', newline='', encoding='utf-8') as file:
+        #         writer = csv.DictWriter(file, fieldnames=fieldnames)
+        #         writer.writeheader()
+        #         writer.writerows(data)   
+
+        # with open(file_path, mode='r', newline='', encoding='utf-8') as file:
+        #     reader = csv.DictReader(file)
+        #     dataread = list(reader)
+        # handuserPrice={}
+        # handuserNicName={}
+        # handuserPriceToAdd=[]
+        # datareadCode=[]
+        # paycode={}
+        # with open('config//IDToPayCode.csv', mode='r', newline='', encoding='utf-8') as file:
+        #     reader = csv.DictReader(file)
+        #     datareadCode = list(reader)
+        # if(len(dataread)>0):
+        #     for dataInfo in dataread: 
+        #         paycodeSet=""
+        #         for datas in datareadCode:
+        #             if(datas["ID"]==dataInfo["操作人ID"]):
+        #                 paycodeSet=datas["支付码ID"]
+        #                 break
+        #         paycode[dataInfo["操作人ID"] ]=paycodeSet
+        #         if( dataInfo["操作人ID"]  in handuserPrice):
+        #             handuserPrice[dataInfo["操作人ID"] ]+=float(dataInfo['价格'])
+        #         else:
+        #             handuserPrice[dataInfo["操作人ID"] ]=float(dataInfo['价格'])
+        #             handuserNicName[dataInfo["操作人ID"] ]=dataInfo['操作人昵称']
                     
-            for handinfo in handuserPrice:
-                paycode[dataInfo["操作人ID"] ]=""
-                for datas in datareadCode:
-                    if(datas["ID"]==handinfo):
-                        paycode[dataInfo["操作人ID"] ]=datas["支付码ID"]
-                handuserPriceToAdd.append({"用户ID":handinfo,'用户名':handuserNicName[handinfo],"总额":handuserPrice[handinfo],"支付码":paycode[dataInfo["操作人ID"] ]})
-            priceHeader=['用户ID','用户名','总额','支付码']
-            # with open('output.csv', mode='a', newline='', encoding='utf-8') as file:
-            #     writer = csv.DictWriter(file,priceHeader) 
-            #     writer.writeheader()
-            #     writer.writerows(handuserPriceToAdd)
+        #     for handinfo in handuserPrice:
+        #         paycode[dataInfo["操作人ID"] ]=""
+        #         for datas in datareadCode:
+        #             if(datas["ID"]==handinfo):
+        #                 paycode[dataInfo["操作人ID"] ]=datas["支付码ID"]
+        #         handuserPriceToAdd.append({"用户ID":handinfo,'用户名':handuserNicName[handinfo],"总额":handuserPrice[handinfo],"支付码":paycode[dataInfo["操作人ID"] ]})
+        #     priceHeader=['用户ID','用户名','总额','支付码']
+        #     # with open('output.csv', mode='a', newline='', encoding='utf-8') as file:
+        #     #     writer = csv.DictWriter(file,priceHeader) 
+        #     #     writer.writeheader()
+        #     #     writer.writerows(handuserPriceToAdd)
     
-            app = xw.App(visible=True, add_book=False)
-            app.display_alerts = False    # 关闭一些提示信息，可以加快运行速度。 默认为 True。
-            app.screen_updating = True    # 更新显示工作表的内容。默认为 True。关闭它也可以提升运行速度。
-            wb = xw.Book()# app.books.open('结算.xls') 
-            sht = wb.sheets[0] 
-            # 将a1,a2,a3输入第一列，b1,b2,b3输入第二列
-            sht.range('A1') .value=priceHeader 
-            sht.range('A2') .options(transpose=True).value=list(handuserPrice.keys())
-            sht.range('B2') .options(transpose=True).value=list(handuserNicName.values())
-            sht.range('C2') .options(transpose=True).value=list(handuserPrice.values())
-            i=2
-            for paycodekey in paycode:
-                if(paycode[paycodekey]!=""):
-                    filePath = os.path.join(os.getcwd(), f'config\\zfcode\\{paycode[paycodekey]}.jpg')
-                    add_center(sht, 'D'+str(i), filePath, width=150, height=150)
-                i+=1
-            wb.save( "Result\\结算"+datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+".xls" )
-            wb.close()
+        #     app = xw.App(visible=True, add_book=False)
+        #     app.display_alerts = False    # 关闭一些提示信息，可以加快运行速度。 默认为 True。
+        #     app.screen_updating = True    # 更新显示工作表的内容。默认为 True。关闭它也可以提升运行速度。
+        #     wb = xw.Book()# app.books.open('结算.xls') 
+        #     sht = wb.sheets[0] 
+        #     # 将a1,a2,a3输入第一列，b1,b2,b3输入第二列
+        #     sht.range('A1') .value=priceHeader 
+        #     sht.range('A2') .options(transpose=True).value=list(handuserPrice.keys())
+        #     sht.range('B2') .options(transpose=True).value=list(handuserNicName.values())
+        #     sht.range('C2') .options(transpose=True).value=list(handuserPrice.values())
+        #     i=2
+        #     for paycodekey in paycode:
+        #         if(paycode[paycodekey]!=""):
+        #             filePath = os.path.join(os.getcwd(), f'config\\zfcode\\{paycode[paycodekey]}.jpg')
+        #             add_center(sht, 'D'+str(i), filePath, width=150, height=150)
+        #         i+=1
+        #     wb.save( "Result\\结算"+datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+".xls" )
+        #     wb.close()
             #wb.app.quit()
     except Exception as ex:
         print(ex)
+        traceback.print_exc()
     finally:
         # 关闭游标
         cursorsql.close()
