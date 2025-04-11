@@ -16,7 +16,11 @@ class DHMsg:
         self.content=content
         self.time=time
         self.fromw=fromw
-
+def xor_encrypt_decrypt(text, key):
+    encrypted_text = ""
+    for char in text:
+        encrypted_text += chr(ord(char) ^ key)
+    return encrypted_text
 def add_center(sht, target, filePath, match=False, width=None, height=None, column_width=None, row_height=None):
     '''Excel智能居中插入图片
 
@@ -86,23 +90,21 @@ def add_center(sht, target, filePath, match=False, width=None, height=None, colu
         sht.pictures.add(filePath, left=left, top=top, width=width, height=height, scale=None, name=name+str(len(sht.pictures)))
     except Exception:  # 已有同名图片，采用默认命名
         pass
-def InsertMarkID(names,odata):
+def InsertMarkID(name,odata,MarkID):
 #names:要插入的所有的名字。odata:已经在数据库的数据
-        for name in names: 
-            id=-1
-            for od in odata:
-                if(od[4]==name):
-                    id=od[0]
-                    break
-            if(id!=-1):
-                MarkID=(odata[-1][0]+1 if cursorsql.lastrowid==0 else cursorsql.lastrowid) 
-                print(f"更新了{name}，他MarkID是{MarkID}")
-                insert_single_sql = '''INSERT INTO MarkWX (wxName ,MarkID ,PayCode,OriginName,AddTime)
-                VALUES (?, ?,?,?,?)'''  
-                cursorsql.execute(insert_single_sql, (name,MarkID,0,name,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
-                # 提交事务，将更改保存到数据库
-                conn.commit() 
-                return  MarkID
+        id=-1
+        for od in odata:
+            if(od[4]==name):
+                id=od[0]
+                break
+        if(id==-1):
+            print(f"**增加了新用户{name}，他MarkID是{MarkID+1}")
+            insert_single_sql = '''INSERT INTO MarkWX (wxName ,MarkID ,PayCode,OriginName,AddTime)
+            VALUES (?, ?,?,?,?)'''  
+            cursorsql.execute(insert_single_sql, (name,MarkID+1,0,name,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
+            # 提交事务，将更改保存到数据库
+            conn.commit() 
+            return  cursorsql.lastrowid
 def CreateTableWxInfo():
     global cursorsql
     create_table_sql = '''
@@ -182,7 +184,7 @@ def InsertWXToXHScache(infos):
                     break
             if(findInToInsert==False):
                 toinsertInfo.append(info)
-                print(f"增加了{info[0]}他备注为{info[3]}")
+                #print(f"Wx-XHS增加了{info[0]}他备注为{info[3]}")
 
      
     # 定义插入单条数据的 SQL 语句datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
@@ -203,8 +205,11 @@ def InsertWXToXHScache(infos):
     conn.commit()
 def InsertXMLNotReceive(infos):
     global wb ,sht3
-    sht3.range('A1') .value=['备注号' ,'微信用户名','小红书名',"内容","缺失"] 
+    sht3.range('A1') .value=['备注号' ,'微信用户名','小红书名',"内容","缺失","备注"] 
     i=2
+    sht3.range('D:D').column_width = 50
+    sht3.range('B:B').column_width = 20
+    sht3.range('C:C').column_width = 20
     for info in infos: 
             sht3.range(f'A{i}') .value=list(info) 
             i+=1
@@ -215,9 +220,16 @@ def InsertXML(infos):
     global sht,wb ,sht1,DZDay
     wxdata=[{}]#[{"wx":"wx用户名"，"xhs":"xhs用户名","z":"1","C":"1","P":"0","sp":"视频证明地址"}]
     # 将a1,a2,a3输入第一列，b1,b2,b3输入第二列
-    header=['微信用户名','备注号' ,"按用户发的计算","支付码图","按小红书查到的计算","金额计算过程","操作账号个数","实际操作数","按用户发的然后从小红书查找计算","小红书账号","信息内容"] 
+    header=['微信用户名','备注号' ,"按用户发的计算","支付码图","按小红书查到的计算","金额计算过程","操作账号个数","实际操作数","按用户发的然后从小红书查找计算","小红书账号","信息内容","按小红书查到的计算==按用户发的然后从小红书查找计算"] 
     sht.range('A1') .value=header
-    sht1.range('A1') .value=header
+    sht1.range('A1') .value=header#没有支付码的人
+    sht1.range('F:F').column_width = 40
+    sht1.range('H:H').column_width = 40
+    sht1.range('K:K').column_width = 40
+    sht.range('F:F').column_width = 40
+    sht.range('H:H').column_width = 40
+    sht.range('K:K').column_width = 40
+    sht.range('J:J').column_width = 15
     i=2
     sht1i=2
     nopaycode=""
@@ -225,14 +237,18 @@ def InsertXML(infos):
     for info in infos: 
         path=f'config\\zfcode\\{int(info[3])}.jpg'
         insertList=list((info[0],info[1],info[2],info[3],info[7],info[4],info[5],info[6],info[8],info[9],info[10]))
+        
         if(int(info[3])==0):
             nopaycode+=f"@{info[0]}"
             paycodeMarkID+=f",{info[1]}"
             sht1.range(f'E{sht1i}').api.WrapText = True
             sht1.range(f'A{sht1i}') .value=insertList
+            sht1.range(f'L{sht1i}').formula = f'=E{sht1i}=I{sht1i}'
             sht1i+=1
+
         else: 
             if(os.path.exists(path)):
+                sht.range(f'L{i}').formula = f'=E{i}=I{i}'
                 sht.range(f'E{i}').api.WrapText = True
                 sht.range(f'A{i}') .value=insertList
                 filePath = os.path.join(os.getcwd(),path )
@@ -240,8 +256,8 @@ def InsertXML(infos):
                 i+=1  
             else:
                 print(f"{info[0]},MarkID{info[1]}在数据库有paycode但是没有文件")
-                sht.range(f'E{sht1i}').api.WrapText = True
-                sht.range(f'A{sht1i}') .value=insertList
+                sht1.range(f'E{sht1i}').api.WrapText = True
+                sht1.range(f'A{sht1i}') .value=insertList
                 nopaycode+=f"@{info[0]}"
                 paycodeMarkID+=f",{info[1]}"
                 sht1i+=1
@@ -249,7 +265,7 @@ def InsertXML(infos):
         print(nopaycode)
         print(paycodeMarkID)
     print("未提供支付码的人：")
-    wb.save(f'Result\\结算({max(DZDay).strftime("%d")}){datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}.xls')
+    wb.save(f'Result\\结算({min(DZDay).strftime("%d")}-{max(DZDay).strftime("%d")}){datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}.xls')
     wb.close()
 def LoadFromZFMulty():
     findindex=1
@@ -260,6 +276,7 @@ def LoadFromZFMulty():
         ds2=ddsd2[1].ListControl()
         infosToSave=[]
         canload=True
+        minus=9999
         while(canload):
             msgitems2=ds2.GetChildren()
             for MsgItem2 in msgitems2:
@@ -278,7 +295,9 @@ def LoadFromZFMulty():
                             #     continue
                             if(find==False):
                                 msgs.append(DHMsg("text","text",textbox1.Name,textbox3.Name,textbox2.Name,MsgItem2.Name))
-            canload= LoadMoreMessage(ds2)
+            resl= LoadMoreMessage(ds2,minus)
+            canload=resl[0]
+            minus=resl[1]
             time.sleep(1) 
         findindex+=1
     return msgs
@@ -324,7 +343,7 @@ def LoadFromZF():
     #myconf.SendKeys('{Esc}')
     return msgs
 
-def LoadMoreMessage( C_MsgList: uia.ListControl):
+def LoadMoreMessage( C_MsgList: uia.ListControl,minnus=9999):
         """加载当前聊天页面更多聊天信息
         
         Returns:
@@ -334,18 +353,19 @@ def LoadMoreMessage( C_MsgList: uia.ListControl):
         loadmore_bottom = loadmore.BoundingRectangle.bottom
         bottom = C_MsgList.BoundingRectangle.bottom
         while True:
-            if loadmore.BoundingRectangle.bottom < bottom :#or loadmore.Name == ''
+            if loadmore.BoundingRectangle.bottom < bottom and minnus!=bottom-loadmore.BoundingRectangle.bottom:#or loadmore.Name == ''
+                minnus=bottom-loadmore.BoundingRectangle.bottom
                 isload = True
                 break
             else:
                 C_MsgList.WheelDown(wheelTimes=5, waitTime=0.1)
-                if loadmore.BoundingRectangle.bottom == loadmore_bottom:
+                if loadmore.BoundingRectangle.bottom == loadmore_bottom or minnus==bottom-loadmore.BoundingRectangle.bottom:
                     isload = False
                     break
                 else:
                     loadmore_bottom = loadmore.BoundingRectangle.bottom
         C_MsgList.WheelDown(wheelTimes=2, waitTime=0.1)
-        return isload
+        return  (isload,minnus)
 def remove_chars_around_colon(s):
     colon_index = s.find(':')
     if colon_index == -1:
@@ -383,12 +403,20 @@ def remove_chars_around_colon(s):
     #     # 拼接去掉冒号及其左右各两个数字后的字符串
     #     return s[:colon_index - 2] + s[colon_index + 3:]
     # return s
+def GetXHSID(xhsIDs,type):
+    ##type:"赞""藏""评论"
+    dataNodeDZ1FailedXHSID=[]
+    dataNodeDZ1FailedXHSID= [data[3].replace(" ", "").replace("，","").replace(" ","").lower() for  data in xhsIDs if data[5]==type]#不符合要求的点赞数据，点上了，但不符合要求
+    dataNodeDZ1FailedXHSID.extend([data.replace("小红薯","")  for data in  dataNodeDZ1FailedXHSID if "小红薯" in data])
+    dataNodeDZ1FailedXHSID.extend([data.replace("用户","")  for data in  dataNodeDZ1FailedXHSID if "用户" in data])
+    return dataNodeDZ1FailedXHSID
+
 if __name__ == '__main__':
     try:  
         global cursorsql,sht,sht1,wb,sht3,DZDay
         IsZF=True#是否是从转发的窗口获取数据
-        breakText="8:30"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
-        DZDay=[datetime.date(2025, 3, 21),datetime.date(2025, 3, 22),datetime.date(2025, 3, 23)]#点赞收藏的哪天
+        breakText="0:09"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
+        DZDay=[datetime.date(2025, 4, 9),]#点赞收藏的哪天
         priceZ=1
         priceC=0.5
         priceP=0.5    
@@ -402,15 +430,15 @@ if __name__ == '__main__':
         CreateTableWxToXHS() 
 #---------------------------------------------------------获取聊天窗口控件信息--------------------------------------------------------------------
         msgs=LoadFromZFMulty()
-        # msgsZ = wx.GetAllMessage(
-        #     savepic   = False,   # 保存图片
-        #     savefile  = False,   # 保存文件
-        #     savevoice = False,    # 保存语音转文字内容
-        #     saveVideo=False,
-        #     saveZF=True,
-        #     breakText=breakText
-        # ) 
-        # msgs.extend(msgsZ)
+        msgsZ = wx.GetAllMessage(
+            savepic   = False,   # 保存图片
+            savefile  = False,   # 保存文件
+            savevoice = False,    # 保存语音转文字内容
+            saveVideo=False,
+            saveZF=True,
+            breakText=breakText
+        ) 
+        msgs.extend(msgsZ)
 #---------------------------------------------------------整理控件的数据到要保存的列表--------------------------------------------------------------------
         infosToSave=[]
         # 输出消息内容
@@ -548,24 +576,29 @@ if __name__ == '__main__':
                         info ["MarkID"]=dn2[2]
                         info ["PayCode"]=dn2[3] 
                         break  
-        #还是没有找到则插入新微信名到MarkWX表 
+        #还是没有找到则插入新微信名到MarkWX表
+        MarkID=dataNode2[-1][0]  #最后一个微信号的ID
         for info in infosToSave:
             if(info["MarkID"]!=0):
                 continue
-            MarkID=InsertMarkID([info["wxID"]],dataNode2)
+            MarkID=InsertMarkID(info["wxID"],dataNode2,MarkID)
             if MarkID !=None:
-                info["MarkID"]=MarkID
-#---------------------------获取点赞的数据---------------------------
+                info["MarkID"]=MarkID 
+#---------------------------获取真实点赞的数据---------------------------
         select_sql = "SELECT * FROM NodeHandleInfo" 
         cursorsql.execute(select_sql)
         # 获取所有查询结果
         dataNodeDZ1 = cursorsql.fetchall() 
+        dataNodeDZ1Failed=[]#status为0的，但是已经点上的数据，为0是因为不符合要求，如只要10个，那第11个就是0，不接受了
         ZListConfirm=[]
         CListConfirm=[]
         OtherListConfirm=[]
         for  DZ1 in dataNodeDZ1:
             time1=datetime.datetime.strptime(DZ1[6], "%Y-%m-%d %H:%M:%S") 
             if(time1.date() in DZDay):
+                if(DZ1[8]==0):
+                    dataNodeDZ1Failed.append(DZ1)
+                    continue
                 if(DZ1[5]=="赞"): 
                     ZListConfirm.append(DZ1)
                 elif(DZ1[5]=="收藏"):
@@ -613,28 +646,35 @@ if __name__ == '__main__':
             CountSummary["p"]+=infosToSave1["IsP"]  
             payAmount=infosToSave1["IsZ"]*priceZ+infosToSave1["IsC"]*priceC+infosToSave1["IsP"]*priceP
             payAmountJS=payAmount#计算减去没在小红书查到的，有的人发 2组赞藏，不写小红书名字，查不到
-            payLoad=f"{str(infosToSave1['IsZ'])}*{str(priceZ)}+{str(infosToSave1['IsC'])}*{str(priceC)}+{str(infosToSave1['IsP'])}*{str(priceP)}"
             wid=   infosToSave1["contentAll"].replace("@姜可艾 没有结算完","").replace("赞",",").replace("藏",",").replace("\u2005",",").replace("。",",").replace("（）",",")\
                 .replace("评",",").lower().replace("两组",",").replace("两组赞藏",",").replace("2组",",").replace("2组赞藏",",").replace("，",",").replace("\n",",").replace(" ",",")\
                 .replace('[聊天记录]',",").replace("已自查",",").replace("）",",").replace("（",",").split("引用,,的消息")[0]#.replace(".",",")
-            
-            if (infosToSave1["wxID"] in CountSummary):
-                CountSummary[infosToSave1["wxID"]]+=(","+wid)
-                CountSummary["内容"+infosToSave1["wxID"]]+=infosToSave1["contentAll"]
-            else:
-                CountSummary[infosToSave1["wxID"]]=wid
-                CountSummary["内容"+infosToSave1["wxID"]]=infosToSave1["contentAll"]
-            widl=[]
+
+            widl=[]#微信里面用户发的自己的小红书号
             for i in  wid.split(","):
                 ddtt=i
                 if(ddtt!=""):
                     ddtt=remove_chars_around_colon(i)
                 if(ddtt!=""):
                     widl.append(ddtt)
+            
+            if (infosToSave1["wxID"] in CountSummary):
+                CountSummary[infosToSave1["wxID"]]+=(","+wid)
+                CountSummary["内容"+infosToSave1["wxID"]]+=infosToSave1["contentAll"]+"\n\n"
+            else:
+                CountSummary[infosToSave1["wxID"]]=wid
+                CountSummary["列表"+infosToSave1["wxID"]]=[]
+                CountSummary["内容"+infosToSave1["wxID"]]=infosToSave1["contentAll"]
+            CountSummary["列表"+infosToSave1["wxID"]].extend(widl)
+
+
+            payLoad=f"{','.join(widl)}： {str(infosToSave1['IsZ'])}*{str(priceZ)}+{str(infosToSave1['IsC'])}*{str(priceC)}+{str(infosToSave1['IsP'])}*{str(priceP)}\n"
             findedxhs=[]
+#-------------------------------------------------------------------从获取的小红书数据中确认微信发的有没有收到---------------------------------------------------
             if(infosToSave1["IsZ"]>0):
+                dataNodeDZ1FailedXHSID=  GetXHSID(dataNodeDZ1Failed,"赞")
                 for zdata in ZListConfirm:
-                    ziD=zdata[3].replace(" ", "").replace("，","").replace(" ","").lower()
+                    ziD=zdata[3].replace(" ", "").replace("，","").replace(" ","").lower()#从小红书里面取出的小红书号
                     if(ziD in widl  or ziD.replace("小红薯","")   in widl or ziD.replace("用户","") in widl):#if(ziD in wid or wid in ziD): 
                         findedxhs.append(ziD) 
                         if(infosToSave1["wxID"] in ReceiveZC ): 
@@ -646,10 +686,14 @@ if __name__ == '__main__':
                     if(ddd not in findedxhs and "小红薯"+ddd not in findedxhs and "用户"+ddd not in findedxhs):
                         CountSummary["Nz"]+=1
                         payAmountJS-=1*priceZ
-                        payLoad+=f"-{ddd}:Z{str(priceZ)}  "
-                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,infosToSave1["content"],"赞"))
+                        payLoad+=f"\n——{ddd}:Z{str(priceZ)}  "
+                        remark=""
+                        if(ddd in dataNodeDZ1FailedXHSID):
+                            remark="收到,但不符合要求"
+                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,infosToSave1["content"],"赞",remark))
             findedxhs.clear()
             if(infosToSave1["IsC"]>0): 
+                dataNodeDZ1FailedXHSID=  GetXHSID(dataNodeDZ1Failed,"收藏")
                 for zdata in CListConfirm:
                     ziD=zdata[3].replace(" ", "").lower()
                     if(ziD in widl or ziD.replace("小红薯","")   in widl or ziD.replace("用户","") in widl):#if(ziD in wid or wid in ziD): 
@@ -663,10 +707,14 @@ if __name__ == '__main__':
                     if(ddd not in findedxhs and "小红薯"+ddd not in findedxhs and "用户"+ddd not in findedxhs):
                         CountSummary["Nc"]+=1
                         payAmountJS-=1*priceC
-                        payLoad+=f"-{ddd}:C{str(priceC)}  "
-                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,infosToSave1["content"],"藏"))
+                        payLoad+=f"\n——{ddd}:C{str(priceC)}  "
+                        remark=""
+                        if(ddd in dataNodeDZ1FailedXHSID):
+                            remark="收到,但不符合要求"
+                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,infosToSave1["content"],"藏",remark))
             findedxhs.clear()
             if(infosToSave1["IsP"]>0):
+                dataNodeDZ1FailedXHSID=  GetXHSID(dataNodeDZ1Failed,"评论")
                 for zdata in OtherListConfirm:
                     ziD=zdata[3].replace(" ", "").lower()
                     if(ziD in widl or ziD.replace("小红薯","") in widl or ziD.replace("用户","") in widl):#if(ziD in wid or wid in ziD): 
@@ -680,42 +728,48 @@ if __name__ == '__main__':
                     if(ddd not in findedxhs and "小红薯"+ddd not in findedxhs and "用户"+ddd not in findedxhs):
                         CountSummary["Np"]+=1
                         payAmountJS-=1*priceP
-                        payLoad+=f"-{ddd}:P{str(priceP)}"
-                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,infosToSave1["content"],"评")) 
-                
+                        payLoad+=f"\n——{ddd}:P{str(priceP)}"
+                        remark=""
+                        if(ddd in dataNodeDZ1FailedXHSID):
+                            remark="收到,但不符合要求"
+                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,infosToSave1["content"],"评",remark)) 
+#--------------------------------------------------------------------数据库列表的组装-------------------------------------------------------------                
             toInsertSqllite.append((infosToSave1["wxID"],infosToSave1["xhsID"],infosToSave1["IsZ"],infosToSave1["IsC"],infosToSave1["IsP"],infosToSave1["ZhengMing"],
                                     infosToSave1["IsConfirm"],infosToSave1["IsPay"],datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S"),infosToSave1["content"],infosToSave1["contentAll"]))
             if(infosToSave1["wxID"]!="姜可艾 没有结算完" and infosToSave1["wxID"]!="姜可艾" and infosToSave1["xhsID"]!=""):
                 toInsertSqlliteWXXHS.append((infosToSave1["wxID"],infosToSave1["xhsID"],datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),infosToSave1["MarkID"],infosToSave1["PayCode"])) 
-            
+#--------------------------------------------------------------------excel数据列表的组装----------------------------------------------------------------            
             find=False 
             maxC=max(infosToSave1['IsZ'],infosToSave1['IsC'],infosToSave1['IsP'])#操作了几个账号
             if(maxC>0):
                 for info in toInsertXML:
                     if(infosToSave1["wxID"]==info[0]):
                         info[2]+=payAmount
-                        info[4]=info[4]+("\n"+payLoad)
+                        info[4]=info[4]+("\n\n"+payLoad)
                         info[5]+= maxC 
                         info[8]+=payAmountJS
                         find=True
                         break
                 if(find==False ): 
                     toInsertXML.append([infosToSave1["wxID"],infosToSave1["MarkID"],payAmount,infosToSave1["PayCode"],payLoad,maxC, "",0,payAmountJS,"",""])
+#-------------------------------------------------------------------------------对要插入excel的数据列表进行计算----------------------------------------------------------
         for txml in toInsertXML: 
             if(txml[0] in ReceiveZC) : 
                 zlist=list(filter(lambda x: "赞" in x, ReceiveZC[txml[0]]))
                 clist=list(filter(lambda x: "收藏" in x, ReceiveZC[txml[0]]))
                 plist=list(filter(lambda x: "评论" in x, ReceiveZC[txml[0]]))
-                zs=','.join(i[1]+i[3] for i in zlist)
-                txml[6] =f"ActualZ:{str(len(zlist))} C:{str(len(clist))} P:{str(len(plist))}\n 赞:{zs}\n 藏:{','.join(i[1]+i[3] for i in clist)}\n 评:{','.join(i[1]+i[3] for i in plist)} "
+                zs=',\n'.join(f"{i[1]}({i[3]})" for i in zlist)
+                cs=',\n'.join(f"{i[1]}({i[3]})" for i in clist)
+                txml[6] =f"ActualZ:{str(len(zlist))} C:{str(len(clist))} P:{str(len(plist))}\n 赞:\n{zs}\n\n 藏:\n{cs}\n\n 评:{','.join(i[1]+i[3] for i in plist)} "
                 txml[7] =len(zlist)*priceZ+len(clist)*priceC+len(plist)*priceP
-                txml[9]=CountSummary[txml[0]] #小红书的账号
-                txml[10]=CountSummary["内容"+txml[0]]#用户发的信息
+            txml[9]=CountSummary[txml[0]] +"\n\n\n拆分后：\n\n"+ "\n".join(CountSummary["列表"+txml[0]])#小红书的账号
+            txml[10]=CountSummary["内容"+txml[0]]#用户发的信息
         NotReceiveZC.append((f"微信赞{str(CountSummary['z'])}",f"微信藏{str(CountSummary['c'])}",f"微信评{str(CountSummary['p'])}",f"小红书赞{str(len(ZListConfirm))}藏{str(len(CListConfirm))}评{str(len(OtherListConfirm))}"
-                             ,f"自然流量赞:{str(len(ZListConfirm)-(CountSummary['z']-CountSummary['Nz']))}藏:{str(len(CListConfirm)-(CountSummary['c']-CountSummary['Nc']))}评:{str(len(OtherListConfirm)-(CountSummary['p']-CountSummary['Np']))}"))
+                             ,f"自然流量赞:{str(len(ZListConfirm)-(CountSummary['z']-CountSummary['Nz']))}藏:{str(len(CListConfirm)-(CountSummary['c']-CountSummary['Nc']))}评:{str(len(OtherListConfirm)-(CountSummary['p']-CountSummary['Np']))}"
+                             ,""))
 #---------------------------------------------------------插入数据库和Excel-----------------------------------------------------------------------------
-        InsertWXToXHScache(toInsertSqlliteWXXHS)
-        InsertWXInfoTocache(toInsertSqllite) 
+        #InsertWXToXHScache(toInsertSqlliteWXXHS)
+        #InsertWXInfoTocache(toInsertSqllite) 
         app = xw.App(visible=False, add_book=False)
         app.display_alerts = False    # 关闭一些提示信息，可以加快运行速度。 默认为 True。
         app.screen_updating = False    # 更新显示工作表的内容。默认为 True。关闭它也可以提升运行速度。

@@ -1,9 +1,5 @@
-# from xhs.core import XhsClient
-# xhs_client = XhsClient(cookie="abRequestId=b1a8204b-f169-5ac9-a240-d7e76f92e284; xsecappid=xhs-pc-web; a1=192bd6bf1cfstrjudljds60zw3ua7ycqcd1hniisp50000115806; webId=aa08832c525b96208379fb35dcbb81eb; gid=yj2yJ8S4q0SjyjJDfKDiyf33SiM9FV7f1VfMyMUK8uEq7x280WvSAI888yy2Y8K820iSyWdi; unread={%22ub%22:%2267945d770000000018018490%22%2C%22ue%22:%226795a56e000000002900aa22%22%2C%22uc%22:24}; web_session=040069b73da8ec64049b58ca80354bb6cf315f; webBuild=4.57.0; loadts=1739950130583; websectiga=3fff3a6f9f07284b62c0f2ebf91a3b10193175c06e4f71492b60e056edcdebb2; sec_poison_id=59cc990d-908b-476d-86b6-f57ba5168334", # 用户 cookie
-#                     ) # 自定义代理
-# xhs_client.get_self_info2()
-import datetime
-import json
+#获取小红书的赞藏评数据
+import datetime 
 from time import sleep
 import csv
 import random
@@ -11,93 +7,19 @@ import re
 from playwright.sync_api import sync_playwright
 import datetime
 from xhs.core import DataFetchError, XhsClient
-from xhs import help
-import os
-import xlwings as xw
-from PIL import Image
+import os 
 import sqlite3 
 import traceback
-
-def add_center(sht, target, filePath, match=False, width=None, height=None, column_width=None, row_height=None):
-    '''Excel智能居中插入图片
-
-    优先级：match > width & height > column_width & row_height
-    建议使用column_width或row_height，定义单元格最大宽或高
-
-    :param sht: 工作表
-    :param target: 目标单元格，字符串，如'A1'
-    :param filePath: 图片绝对路径
-    :param width: 图片宽度
-    :param height: 图片高度
-    :param column_width: 单元格最大宽度，默认100像素，0 <= column_width <= 1557.285
-    :param row_height: 单元格最大高度，默认75像素，0 <= row_height <= 409.5
-    :param match: 绝对匹配原图宽高，最大宽度1557.285，最大高度409.5
-    '''
-    unit_width = 6.107  # Excel默认列宽与像素的比
-    rng = sht.range(target)  # 目标单元格
-    name = os.path.basename(filePath)  # 文件名
-    _width, _height = Image.open(filePath).size  # 原图片宽高
-    NOT_SET = True  # 未设置单元格宽高
-    # match
-    if match:  # 绝对匹配图像
-        width, height = _width, _height
-    else:  # 不绝对匹配图像
-        # width & height
-        if width or height:
-            if not height:  # 指定了宽，等比计算高
-                height = width / _width * _height
-            if not width:  # 指定了高，等比计算宽
-                width = height / _height * _width
-        else:
-            # column_width & row_height
-            if column_width and row_height:  # 同时指定单元格最大宽高
-                width = row_height / _height * _width  # 根据单元格最大高度假设宽
-                height = column_width / _width * _height  # 根据单元格最大宽度假设高
-                area_width = column_width * height  # 假设宽优先的面积
-                area_height = row_height * width  # 假设高优先的面积
-                if area_width > area_height:
-                    width = column_width
-                else:
-                    height = row_height
-            elif not column_width and not row_height:  # 均无指定单元格最大宽高
-                column_width = 100
-                row_height = 75
-                rng.column_width = column_width / unit_width  # 更新当前宽度
-                rng.row_height = row_height  # 更新当前高度
-                NOT_SET = False
-                width = row_height / _height * _width  # 根据单元格最大高度假设宽
-                height = column_width / _width * _height  # 根据单元格最大宽度假设高
-                area_width = column_width * height  # 假设宽优先的面积
-                area_height = row_height * width  # 假设高优先的面积
-                if area_width > area_height:
-                    height = row_height
-                else:
-                    width = column_width
-            else:
-                width = row_height / _height * _width if row_height else column_width  # 仅设了单元格最大宽度
-                height = column_width / _width * _height if column_width else row_height  # 仅设了单元格最大高度
-    assert 0 <= width / unit_width <= 255
-    assert 0 <= height <= 409.5
-    if NOT_SET:
-        rng.column_width = width / unit_width  # 更新当前宽度
-        rng.row_height = height  # 更新当前高度
-    left = rng.left + (rng.width - width) / 2  # 居中
-    top = rng.top + (rng.height - height) / 2
-    try:
-        sht.pictures.add(filePath, left=left, top=top, width=width, height=height, scale=None, name=name+str(len(sht.pictures)))
-    except Exception:  # 已有同名图片，采用默认命名
-        pass
  
-
 def sign(uri, data=None, a1="", web_session=""):
     for _ in range(10):
         try:
             with sync_playwright() as playwright:
                 stealth_js_path = "E:\\my\\job\\xhsTG\\public\\stealth.min.js"
                 chromium = playwright.chromium
-
+                browser_path = os.path.join(os.getenv('LOCALAPPDATA'), 'ms-playwright', 'chromium-1148', 'chrome-win', 'chrome.exe')
                 # 如果一直失败可尝试设置成 False 让其打开浏览器，适当添加 sleep 可查看浏览器状态
-                browser = chromium.launch(headless=True)
+                browser = chromium.launch(executable_path=browser_path,headless=True)
 
                 browser_context = browser.new_context()
                 browser_context.add_init_script(path=stealth_js_path)
@@ -125,18 +47,23 @@ def remove_brackets_content(s):
     return result
 #按顺序获取指定个数个获取点赞，收藏，评论
 def GetInfoBySeq(catchlike,catchMention):
-    # 定义查询数据的 SQL 语句
-    select_sql = "SELECT * FROM NodeTextInfo"
-    # 执行查询语句
     global cursorsql,noteToCal,endtimes
+    # 定义查询数据的 SQL 语句
+    select_sql = "SELECT * FROM NodeTextInfoEncry"
+    if(InNormal):
+        select_sql = "SELECT * FROM NodeTextInfo"
+    # 执行查询语句
     cursorsql.execute(select_sql)
     # 获取所有查询结果
     dataNode = cursorsql.fetchall()
+    if(InNormal==False):
+        dataNode=[ [xor_encrypt_decrypt(datain) if isinstance(datain,int)==False else datain for datain in data ] for data in dataNode]
     data = [ ] 
     noteinfoTitle=""
     global handleType
     global xhs_client
     cursor=""
+    minendtime=min(endtimes)
     while(catchlike>0): 
         note=  xhs_client.get_like_notifications(20,cursor)
         #note = xhs_client.get_note_by_id_from_html("67afecdf0000000028028c36","ABMuGHPzkrF3_R-x2Hv5gsctdOl93DbPpH4QcpptsADdg=")#,
@@ -147,8 +74,8 @@ def GetInfoBySeq(catchlike,catchMention):
         for noteInfo in note['message_list']:
             incurrectDay=False
             for endtime in endtimes: 
-                if datetime.datetime.fromtimestamp(noteInfo['time']).date()!=endtime.date():
-                    if datetime.datetime.fromtimestamp(noteInfo['time'])<endtime:
+                if datetime.datetime.fromtimestamp(noteInfo['time']).date()!=endtime:
+                    if datetime.datetime.fromtimestamp(noteInfo['time']).date()<minendtime:
                         findendtime=True
                         break 
                     else:
@@ -178,6 +105,8 @@ def GetInfoBySeq(catchlike,catchMention):
                         cursorsql.execute(select_sql)
                         # 获取所有查询结果
                         dataNode = cursorsql.fetchall()
+                        if(InNormal==False):
+                            dataNode=[ [xor_encrypt_decrypt(datain) if isinstance(datain,int)==False else datain for datain in data ] for data in dataNode]
                     data.append({"预览图":noteInfo['item_info']['image'],"篇":noteID,"篇title":noteinfoTitle,
                                 "作者":noteInfo['item_info']['user_info']["userid"] if  'user_info' in noteInfo['item_info'] else "",
                                 '操作人ID':noteInfo["user_info"]['userid'], '操作人昵称':noteInfo["user_info"]['nickname'],'操作人头像':noteInfo["user_info"]['image'],
@@ -188,7 +117,8 @@ def GetInfoBySeq(catchlike,catchMention):
         catchlike-=20
         cursor=note['strCursor']  
         if(note["has_more"]==False):break  
-        sleep(random.randint(1, 3))
+        print(f"赞藏：catchlike{catchlike} cursor:{cursor}")
+        sleep(random.uniform(0.2, 2.0))
     cursor=""
     while(catchMention>0):
         mentionNote=  xhs_client.get_mention_notifications(20,cursor)
@@ -196,8 +126,8 @@ def GetInfoBySeq(catchlike,catchMention):
         for noteInfo in mentionNote['message_list'] :
             incurrectDay=False
             for endtime in endtimes: 
-                if datetime.datetime.fromtimestamp(noteInfo['time']).date()!=endtime.date():
-                    if datetime.datetime.fromtimestamp(noteInfo['time'])<endtime:
+                if datetime.datetime.fromtimestamp(noteInfo['time']).date()!=endtime:
+                    if datetime.datetime.fromtimestamp(noteInfo['time']).date()<minendtime:
                         findendtime=True
                         break 
                     else:
@@ -228,6 +158,8 @@ def GetInfoBySeq(catchlike,catchMention):
                     cursorsql.execute(select_sql)
                     # 获取所有查询结果
                     dataNode = cursorsql.fetchall()
+                    if(InNormal==False):
+                        dataNode=[ [xor_encrypt_decrypt(datain) if isinstance(datain,int)==False else datain for datain in data ] for data in dataNode]
                 data.append({"预览图":noteInfo['item_info']['image'],"篇":noteID,"篇title":noteinfoTitle,
                             "作者":noteInfo['item_info']['user_info']["userid"] if  'user_info' in noteInfo['item_info'] else "",
                             '操作人ID':noteInfo["user_info"]['userid'], '操作人昵称':noteInfo["user_info"]['nickname'],'操作人头像':noteInfo["user_info"]['image'],
@@ -238,16 +170,44 @@ def GetInfoBySeq(catchlike,catchMention):
         catchMention-=20
         cursor=mentionNote['strCursor']  
         if(mentionNote["has_more"]==False):break  
-        sleep(random.randint(1, 3))
+        print(f"评论：mention{catchMention} cursor:{cursor}")
+        sleep(random.uniform(0.2, 2.0))
     return data
-def InsertNoteInfoTocache(note_id ,xsec_token ,user_id , nickname="", title="", desc="" , time="" ,likecount=0 ,collectedcount=0, commentcount=0 ,sharecount=0,image=""):
+def InsertNoteInfoTocacheEncry(note_id ,xsec_token ,user_id , nickname="", title="", desc="" , time="" ,likecount=0 ,collectedcount=0, commentcount=0 ,sharecount=0,image=""):
     global cursorsql
     # 定义插入单条数据的 SQL 语句
-    insert_single_sql = '''INSERT INTO NodeTextInfo (note_id ,xsec_token ,user_id , nickname, title, desc , time ,likecount ,collectedcount, commentcount ,sharecount,image)
+    insert_single_sql = '''INSERT INTO NodeTextInfoEncry (note_id ,xsec_token ,user_id , nickname, title, desc , time ,likecount ,collectedcount, commentcount ,sharecount,image)
      VALUES (?, ?,?,?, ?,?,?, ?,?,?, ?,?)'''
     # 插入单条数据
-    cursorsql.execute(insert_single_sql, (note_id ,xsec_token ,user_id , nickname, title, desc , time ,likecount ,collectedcount, commentcount ,sharecount,image))
+    cursorsql.execute(insert_single_sql, (xor_encrypt_decrypt(note_id) ,xor_encrypt_decrypt(xsec_token)  ,xor_encrypt_decrypt(user_id ) ,xor_encrypt_decrypt( nickname) ,xor_encrypt_decrypt( title),
+                                        xor_encrypt_decrypt( desc) ,xor_encrypt_decrypt(time) ,xor_encrypt_decrypt(likecount ) ,xor_encrypt_decrypt(collectedcount) ,xor_encrypt_decrypt( commentcount ),
+                                        xor_encrypt_decrypt(sharecount) ,xor_encrypt_decrypt(image)))
+ 
+    conn.commit()
+def InsertNoteHandleTocacheEncry( datas):
+    global cursorsql
+    # 定义插入单条数据的 SQL 语句
+    insert_single_sql = '''INSERT INTO NodeHandleInfoEncry (noteID ,handleUserID , handleUserName, handleUserImage, handleType , handleTime ,mentionContent ,status,addtime)
+     VALUES (?,?,?,?,?,?,?,?,?)'''
+    toinsert=[]
+    for data in datas:
+        toinsert.append((xor_encrypt_decrypt(data["篇"] ) ,xor_encrypt_decrypt(data["操作人ID"] ) ,xor_encrypt_decrypt(data["操作人昵称"]) ,xor_encrypt_decrypt(data["操作人头像"]) ,xor_encrypt_decrypt(data["操作类型"]
+                       ) ,xor_encrypt_decrypt(data["操作时间"]) ,xor_encrypt_decrypt(data["评论内容"]) ,xor_encrypt_decrypt("1") ,xor_encrypt_decrypt(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))))
+    # 插入单条数据
+    cursorsql.executemany(insert_single_sql, toinsert)
+ 
+    conn.commit()
 
+def InsertNoteInfoTocache(note_id ,xsec_token ,user_id , nickname="", title="", desc="" , time="" ,likecount=0 ,collectedcount=0, commentcount=0 ,sharecount=0,image=""):
+    global cursorsql,InEncry,InNormal
+    if(InNormal):
+        # 定义插入单条数据的 SQL 语句
+        insert_single_sql = '''INSERT INTO NodeTextInfo (note_id ,xsec_token ,user_id , nickname, title, desc , time ,likecount ,collectedcount, commentcount ,sharecount,image)
+        VALUES (?, ?,?,?, ?,?,?, ?,?,?, ?,?)'''
+        # 插入单条数据
+        cursorsql.execute(insert_single_sql, (note_id ,xsec_token ,user_id , nickname, title, desc , time ,likecount ,collectedcount, commentcount ,sharecount,image))
+    if(InEncry):
+        InsertNoteInfoTocacheEncry(note_id ,xsec_token ,user_id , nickname, title, desc , time ,likecount ,collectedcount, commentcount ,sharecount,image)
     # # 定义插入多条数据的 SQL 语句
     # insert_multiple_sql = "INSERT INTO users (name, age) VALUES (?, ?)"
     # # 要插入的多条数据
@@ -261,16 +221,22 @@ def InsertNoteInfoTocache(note_id ,xsec_token ,user_id , nickname="", title="", 
     # 提交事务，将更改保存到数据库
     conn.commit()
 def InsertNoteHandleTocache( datas):
-    global cursorsql
-    # 定义插入单条数据的 SQL 语句
-    insert_single_sql = '''INSERT INTO NodeHandleInfo (noteID ,handleUserID , handleUserName, handleUserImage, handleType , handleTime ,mentionContent ,status,addtime)
-     VALUES (?,?,?,?,?,?,?,?,?)'''
-    toinsert=[]
-    for data in datas:
-        toinsert.append((data["篇"] , data["操作人ID"] ,data["操作人昵称"] ,data["操作人头像"],data["操作类型"],data["操作时间"],data["评论内容"],1,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
-    # 插入单条数据
-    cursorsql.executemany(insert_single_sql, toinsert)
-
+    global cursorsql,InEncry,InNormal
+    if(InNormal):
+        # 定义插入单条数据的 SQL 语句
+        insert_single_sql = '''INSERT INTO NodeHandleInfo (noteID ,handleUserID , handleUserName, handleUserImage, handleType , handleTime ,mentionContent ,status,addtime)
+        VALUES (?,?,?,?,?,?,?,?,?)'''
+        toinsert=[]
+        for data in datas:
+            status=1
+            if(len([dataC for dataC in toinsert  if dataC[0]==data["篇"] and dataC[1]==data["操作人ID"] and dataC[4]==data["操作类型"]])>0):
+                status=0
+                print(f'{data["操作人昵称"]} 对篇{data["篇"]} 操作重复了{data["操作类型"]}')
+            toinsert.append((data["篇"] , data["操作人ID"] ,data["操作人昵称"] ,data["操作人头像"],data["操作类型"],data["操作时间"],data["评论内容"],status,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
+        # 插入单条数据
+        cursorsql.executemany(insert_single_sql, toinsert)
+    if(InEncry):
+        InsertNoteHandleTocacheEncry(datas)
     # # 定义插入多条数据的 SQL 语句
     # insert_multiple_sql = "INSERT INTO users (name, age) VALUES (?, ?)"
     # # 要插入的多条数据
@@ -283,51 +249,47 @@ def InsertNoteHandleTocache( datas):
 
     # 提交事务，将更改保存到数据库
     conn.commit()
+def xor_encrypt_decrypt(text, key=1123):
+    encrypted_text = ""
+    for char in str(text):
+        encrypted_text += chr(ord(char) ^ key)
+    return encrypted_text
 if __name__ == '__main__':
     try:  
         global xhs_client
-        global handleType,noteToCal,endtimes
-        cookie = "abRequestId=b1a8204b-f169-5ac9-a240-d7e76f92e284; a1=192bd6bf1cfstrjudljds60zw3ua7ycqcd1hniisp50000115806; webId=aa08832c525b96208379fb35dcbb81eb; gid=yj2yJ8S4q0SjyjJDfKDiyf33SiM9FV7f1VfMyMUK8uEq7x280WvSAI888yy2Y8K820iSyWdi; x-user-id-creator.xiaohongshu.com=6649eba4000000000d0254cd; customerClientId=244158184254652; access-token-creator.xiaohongshu.com=customer.creator.AT-68c517473327474294336871falud8fmecdtl0kl; galaxy_creator_session_id=vkGmDW3N11pOMMAOEiFNwrTTAT3diXO8XfED; galaxy.creator.beaker.session.id=1740019646207039144021; xsecappid=xhs-pc-web; webBuild=4.60.1; web_session=04006979478696029c2ce88fed354bd9723a03; unread={%22ub%22:%2267d37e04000000001c00d16c%22%2C%22ue%22:%2267d8074a000000000602ae7b%22%2C%22uc%22:16}; websectiga=984412fef754c018e472127b8effd174be8a5d51061c991aadd200c69a2801d6; sec_poison_id=598e0daa-8814-40f0-b0e2-cd8f745be798; loadts=1742269363475"
-        catchlike=2000#获取100个赞藏数据
-        catchMention=300#获取100个评论数据
-        noteToCal=["","67d930db000000000d016ae5"]#,"67d546e200000000060284cb"
-        endtimes=[datetime.date(2025, 3, 21),datetime.date(2025, 3, 22)]
-        #file_path="Result\\"+datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+"Detail.csv"
+        global handleType,noteToCal,endtimes,InNormal,InEncry
+        InEncry=False
+        InNormal=True
+        cookie = " "
+        #--------------------------------------------------------------------------读配置的参数--------------------------------------------
+        file_path='config\\config.csv'
+        dataread=[]
+        if os.path.exists(file_path): 
+            with open(file_path, mode='r', newline='', encoding='utf-8') as file:
+                reader = csv.reader(file)
+                dataread = list(reader)
+                cookie = dataread[0][0]
+                noteToCal=dataread[1]
+                endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in dataread[2] if datadate!=""]
+                catchlike= int(dataread[3][0])
+                catchMention=int (dataread[3][1])  
+        # catchlike=2000#获取100个赞藏数据
+        # catchMention=300#获取100个评论数据
+        # noteToCal=[""]#,"67d546e200000000060284cb"
+        # endtimes=[datetime.date(2025, 3, 26)] 
         xhs_client = XhsClient(cookie, sign=sign)
         # 连接到 SQLite 数据库，如果数据库文件不存在则会创建一个新的数据库文件
         conn = sqlite3.connect('config\\WorkData.db')
         # 创建一个游标对象，用于执行 SQL 语句
         global cursorsql
-        cursorsql = conn.cursor()
-        # 定义创建表的 SQL 语句
-        #InsertNoteInfoTocache('6279927a0000000001028487','LBumpsGOchO7EzgOzA56KRfn32nNT9EvRcgwLfIPjFGYs=','5f6303c5000000000101ebb4','姜可可艾','有一种童年的向往，就是宫崎骏的夏天',"",'2022-05-10 06:15:22',2,1,2,4)
-        create_table_sql = '''
-        CREATE TABLE IF NOT EXISTS NodeTextInfo (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            note_id TEXT NOT NULL,
-            xsec_token TEXT NOT NULL,
-            user_id TEXT,
-            nickname TEXT,
-            title TEXT ,
-            desc TEXT,
-            time TEXT,
-            likecount INTEGER,
-            collectedcount INTEGER,
-            commentcount INTEGER,
-            sharecount INTEGER
-        )
-        '''
-        # 执行 SQL 语句创建表
-        cursorsql.execute(create_table_sql)
-        # 提交事务，将更改保存到数据库
-        conn.commit() 
-
-
+        cursorsql = conn.cursor() 
         print(datetime.datetime.now())
         handleType={'faved/item':'收藏','liked/item':'赞',"comment/comment":'评论评论',"comment/item":'评论'}#"mention/item":'在笔记中@了你''liked/comment':赞了你的评论
         handleTypePrice={'faved/item':0.5,'liked/item':1,"comment/comment":0,"comment/item":0.5}
         fieldnames = ['操作ID','预览图','篇','篇title','作者','操作人ID','操作人昵称','操作人头像','操作类型',  '操作时间','评论内容','价格']
         data =GetInfoBySeq(catchlike,catchMention)
+        #data=[{ "篇":1 , "操作人ID":1,"操作人昵称":1 ,"操作人头像":1,"操作类型":1,"操作时间":1,"评论内容":1},{ "篇":2 , "操作人ID":2,"操作人昵称":2 ,"操作人头像":2,"操作类型":2,"操作时间":2,"评论内容":2},
+              #{ "篇":1 , "操作人ID":1,"操作人昵称":1 ,"操作人头像":1,"操作类型":1,"操作时间":1,"评论内容":1}]
         InsertNoteHandleTocache(data)
 
         #dataread=[]

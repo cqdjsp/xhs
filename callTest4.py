@@ -296,10 +296,12 @@ def remove_chars_around_colon(s):
     return s[:left_index + 1] + s[right_index:]
 
 
-test_strings = ["123:456", "s1:2y45","01:2io","dd1:0"]
-for s in test_strings:
-    print(remove_chars_around_colon(s))
-# updateWXtoXHS()
+dataNodeDZ1Failed = [
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15]
+]
 
-
-dsf=1
+# 使用列表推导式提取每个子列表的第 4 个元素
+result = [data[3] for data in dataNodeDZ1Failed if data[2]>5]
+print(result)
