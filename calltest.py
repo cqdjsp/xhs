@@ -118,7 +118,7 @@ def GetInfoBySeq(catchlike,catchMention):
         cursor=note['strCursor']  
         if(note["has_more"]==False):break  
         print(f"赞藏：catchlike{catchlike} cursor:{cursor}")
-        sleep(random.uniform(0.2, 2.0))
+        sleep(random.uniform(0.2, 1.0))
     cursor=""
     while(catchMention>0):
         mentionNote=  xhs_client.get_mention_notifications(20,cursor)
@@ -221,7 +221,12 @@ def InsertNoteInfoTocache(note_id ,xsec_token ,user_id , nickname="", title="", 
     # 提交事务，将更改保存到数据库
     conn.commit()
 def InsertNoteHandleTocache( datas):
-    global cursorsql,InEncry,InNormal
+    global cursorsql,InEncry,InNormal,noteToCalDetail,noteToCal
+    select_sql = "SELECT * FROM NodeHandleInfo" 
+    cursorsql.execute(select_sql)
+    # 获取所有查询结果
+    dataNodeDZ1 = cursorsql.fetchall() 
+     
     if(InNormal):
         # 定义插入单条数据的 SQL 语句
         insert_single_sql = '''INSERT INTO NodeHandleInfo (noteID ,handleUserID , handleUserName, handleUserImage, handleType , handleTime ,mentionContent ,status,addtime)
@@ -231,7 +236,22 @@ def InsertNoteHandleTocache( datas):
             status=1
             if(len([dataC for dataC in toinsert  if dataC[0]==data["篇"] and dataC[1]==data["操作人ID"] and dataC[4]==data["操作类型"]])>0):
                 status=0
-                print(f'{data["操作人昵称"]} 对篇{data["篇"]} 操作重复了{data["操作类型"]}')
+                print(f'******{data["操作人昵称"]} 对篇{data["篇"]} 操作重复了{data["操作类型"]}')
+            for i,ele in enumerate(noteToCal):
+                if data["篇"]==ele:
+                    if noteToCalDetail[i][0]!="1" and data["操作类型"]=="赞":
+                        status=0
+                    elif noteToCalDetail[i][1]!="1" and data["操作类型"]=="收藏":
+                        status=0
+                    elif noteToCalDetail[i][2]!="1" and data["操作类型"]=="评论":
+                        status=0
+                if(status==0):    
+                    print(f'******{data["操作人昵称"]} 对篇{data["篇"]} 操作 {data["操作类型"]} 不和要求')
+                    break
+            findold=[da for da in dataNodeDZ1 if (da[1]==data["篇"] and da[2]==data["操作人ID"] and da[5]==data["操作类型"] )]
+            if (len(findold)>0):
+                print(f'******{data["操作人昵称"]} 对篇{data["篇"]} 与过往重复{data["操作类型"]} 现时间{data["操作时间"]} 过去时间{findold[0][6]}')
+                continue
             toinsert.append((data["篇"] , data["操作人ID"] ,data["操作人昵称"] ,data["操作人头像"],data["操作类型"],data["操作时间"],data["评论内容"],status,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
         # 插入单条数据
         cursorsql.executemany(insert_single_sql, toinsert)
@@ -257,7 +277,7 @@ def xor_encrypt_decrypt(text, key=1123):
 if __name__ == '__main__':
     try:  
         global xhs_client
-        global handleType,noteToCal,endtimes,InNormal,InEncry
+        global handleType,noteToCal,endtimes,InNormal,InEncry,noteToCalDetail
         InEncry=False
         InNormal=True
         cookie = " "
@@ -273,6 +293,7 @@ if __name__ == '__main__':
                 endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in dataread[2] if datadate!=""]
                 catchlike= int(dataread[3][0])
                 catchMention=int (dataread[3][1])  
+                noteToCalDetail=dataread[4]
         # catchlike=2000#获取100个赞藏数据
         # catchMention=300#获取100个评论数据
         # noteToCal=[""]#,"67d546e200000000060284cb"

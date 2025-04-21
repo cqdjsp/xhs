@@ -295,13 +295,21 @@ def remove_chars_around_colon(s):
     # 拼接结果
     return s[:left_index + 1] + s[right_index:]
 
+wx = WeChat()
+tempMsg=wx.GetAllMessage(
+        savepic   = False,   # 保存图片
+        savefile  = False,   # 保存文件
+        savevoice = False,    # 保存语音转文字内容
+        saveVideo=False,
+        saveZF=True,
+        AreaText=("AreaText")
+    ) 
+# dataNodeDZ1Failed = [
+#     [1, 2, 3, 4, 5],
+#     [6, 7, 8, 9, 10],
+#     [11, 12, 13, 14, 15]
+# ]
 
-dataNodeDZ1Failed = [
-    [1, 2, 3, 4, 5],
-    [6, 7, 8, 9, 10],
-    [11, 12, 13, 14, 15]
-]
-
-# 使用列表推导式提取每个子列表的第 4 个元素
-result = [data[3] for data in dataNodeDZ1Failed if data[2]>5]
-print(result)
+# # 使用列表推导式提取每个子列表的第 4 个元素
+# result = [data[3] for data in dataNodeDZ1Failed if data[2]>5]
+# print(result)

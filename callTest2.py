@@ -8,6 +8,7 @@ import os
 import traceback
 from PIL import Image
 import time
+import csv
 class DHMsg:
     def __init__(self, type, myType,sender,content,time,fromw):
         self.type = type
@@ -15,7 +16,7 @@ class DHMsg:
         self.sender=sender
         self.content=content
         self.time=time
-        self.fromw=fromw
+        self.fromw=fromw 
 def xor_encrypt_decrypt(text, key):
     encrypted_text = ""
     for char in text:
@@ -270,10 +271,17 @@ def InsertXML(infos):
 def LoadFromZFMulty():
     findindex=1
     msgs = []
+    msgszfzf=[]#转发中的转发
+    handledWnd=[]
     while(check_window_exists('ChatRecordWnd',findindex)):
         myconf=uia.WindowControl(ClassName='ChatRecordWnd', searchDepth=1,foundIndex=findindex)
-        ddsd2=myconf.GetChildren()
-        ds2=ddsd2[1].ListControl()
+        if(myconf.NativeWindowHandle not in handledWnd): 
+            handledWnd.append(myconf.NativeWindowHandle)
+        else:
+            continue
+        myconf.SwitchToThisWindow()
+        ddsd2=myconf.GetChildren() 
+        ds2=ddsd2[1].ListControl() 
         infosToSave=[]
         canload=True
         minus=9999
@@ -281,9 +289,31 @@ def LoadFromZFMulty():
             msgitems2=ds2.GetChildren()
             for MsgItem2 in msgitems2:
                 if MsgItem2.ControlTypeName == 'ListItemControl' :
+                        textbox1=MsgItem2.TextControl(searchDepth=10,foundIndex=1)
+                        textbox2=MsgItem2.TextControl(searchDepth=10,foundIndex=2)
+                        if(MsgItem2.Name==""  ):
+                            try:
+                                try:
+                                    text_control = MsgItem2.TextControl(searchDepth=30,foundIndex=4)
+                                    if text_control.Exists() and text_control.Name=="视频":
+                                        continue
+                                except Exception as ex1:
+                                    pass
+                                find=False
+                                for mg in msgszfzf:
+                                    if(mg.content==text_control.Name and mg.sender==textbox1.Name):
+                                        find=True
+                                        break
+                                date_time = datetime.datetime.strptime(textbox2.Name, "%m-%d %H:%M:%S")
+                                # if(datetime.datetime(1900,3,16,0,0,0)>date_time):
+                                #     continue
+                                if(find==False):
+                                    text_controlT=text_control.Name.split(": ")
+                                    tc=text_control.Name.replace(text_controlT[0],"").replace("[视频]","").replace(": ","")
+                                    msgszfzf.append(DHMsg("text","text",textbox1.Name,tc,textbox2.Name,MsgItem2.Name))         
+                            except Exception as ex:
+                                print(f"非转发")
                         if(MsgItem2.Name!="" and "[图片]" not in MsgItem2.Name):
-                            textbox1=MsgItem2.TextControl(searchDepth=10,foundIndex=1)
-                            textbox2=MsgItem2.TextControl(searchDepth=10,foundIndex=2)
                             textbox3=MsgItem2.TextControl(searchDepth=10,foundIndex=3)
                             find=False
                             for mg in msgs:
@@ -300,6 +330,12 @@ def LoadFromZFMulty():
             minus=resl[1]
             time.sleep(1) 
         findindex+=1
+     
+    for msg in msgszfzf:
+        findin=[ms for ms in msgs if (ms.sender==msg.sender and ("2组" in ms.content or "两组" in ms.content) )]
+        if(len(findin)>0):
+            findin[0].content+= msg.content
+        
     return msgs
 def check_window_exists(class_name,findindex=1):
     try:
@@ -410,43 +446,85 @@ def GetXHSID(xhsIDs,type):
     dataNodeDZ1FailedXHSID.extend([data.replace("小红薯","")  for data in  dataNodeDZ1FailedXHSID if "小红薯" in data])
     dataNodeDZ1FailedXHSID.extend([data.replace("用户","")  for data in  dataNodeDZ1FailedXHSID if "用户" in data])
     return dataNodeDZ1FailedXHSID
-
-if __name__ == '__main__':
-    try:  
-        global cursorsql,sht,sht1,wb,sht3,DZDay
-        IsZF=True#是否是从转发的窗口获取数据
-        breakText="0:09"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
-        DZDay=[datetime.date(2025, 4, 9),]#点赞收藏的哪天
-        priceZ=1
-        priceC=0.5
-        priceP=0.5    
-        wx = WeChat()
-        wx.ChatWith(who="姜可艾群")
-        while(wx.LoadMoreMessage()) :
-            print("向上滚动")
-        conn = sqlite3.connect('config\\WorkData.db')
-        cursorsql = conn.cursor()
-        CreateTableWxInfo()
-        CreateTableWxToXHS() 
-#---------------------------------------------------------获取聊天窗口控件信息--------------------------------------------------------------------
-        msgs=LoadFromZFMulty()
-        msgsZ = wx.GetAllMessage(
+def loadMoreCleaver(AreaText):
+    startText=AreaText[0]
+    tempMsg=[]
+    while(True) :
+        tempMsg=wx.GetAllMessage(
+                savepic   = False,   # 保存图片
+                savefile  = False,   # 保存文件
+                savevoice = False,    # 保存语音转文字内容
+                saveVideo=False,
+                saveZF=False,
+                AreaText=AreaText
+            ) 
+        if (startText!="" and  len([msg for msg in tempMsg if startText in msg.content])>0):
+            break
+        elif(wx.LoadMoreMessage()):
+            print("向上滚动")   
+        else:
+            print("加载信息结束") 
+            break
+    tempMsg=wx.GetAllMessage(
             savepic   = False,   # 保存图片
             savefile  = False,   # 保存文件
             savevoice = False,    # 保存语音转文字内容
             saveVideo=False,
             saveZF=True,
-            breakText=breakText
+            AreaText=AreaText
         ) 
-        msgs.extend(msgsZ)
+    return tempMsg 
+if __name__ == '__main__':
+    try:  
+        global cursorsql,sht,sht1,wb,sht3,DZDay
+        file_path='config\\config.csv'
+        dataread=[]
+        if os.path.exists(file_path): 
+            with open(file_path, mode='r', newline='', encoding='utf-8') as file:
+                reader = csv.reader(file)
+                dataread = list(reader)
+                cookie = dataread[0][0]
+                noteToCal=dataread[1]
+                endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in dataread[2] if datadate!=""]
+                catchlike= int(dataread[3][0])
+                catchMention=int (dataread[3][1])  
+        IsZF=True#是否是从转发的窗口获取数据
+        StartText="2025年4月18日 9:20"#"0:25"
+        breakText="0:59"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
+        DZDay=endtimes#点赞收藏的哪天
+        priceZ=1
+        priceC=0.5
+        priceP=0.5    
+        wx = WeChat()
+        wx.ChatWith(who="姜可艾群")
+        conn = sqlite3.connect('config\\WorkData.db')
+        cursorsql = conn.cursor()
+        CreateTableWxInfo()
+        CreateTableWxToXHS() 
+#---------------------------------------------------------获取聊天窗口控件信息--------------------------------------------------------------------
+        msgsZF=[]
+        msgsZF.extend(LoadFromZFMulty())
+        msgsC =[]
+        msgsC.extend(loadMoreCleaver((StartText,breakText)))
+        msgs=[]
+        msgs.extend(msgsC)
+        msgs.extend(msgsZF)
 #---------------------------------------------------------整理控件的数据到要保存的列表--------------------------------------------------------------------
         infosToSave=[]
+        starthandle=False
         # 输出消息内容
         for msg in msgs:
+            if(msg.content==StartText or len(msgsC)==0 or StartText==""):
+                starthandle=True
+            if(starthandle==False):
+                continue
             if msg.type == 'sys':
                 print(f'【系统消息】{msg.content}')
             elif msg.type == 'friend' or msg.type == 'text':
                 if(breakText!=None and msg.content==breakText):break
+                handletime=""
+                if hasattr(msg, "time"):
+                    handletime=msg.time
                 sender = msg.sender # 这里可以将msg.sender改为msg.sender_remark，获取备注名
 #---------------------------------------这些数据类型不处理，直接跳过----------------------------------------------------
                 if(msg.myType=="[图片]" or msg.myType=="[文件]" or msg.myType=="[语音]" or msg.myType=="[已收款]"
@@ -465,6 +543,7 @@ if __name__ == '__main__':
                     infossaveeone["IsConfirm"]=0
                     infossaveeone["IsPay"]=0
                     infossaveeone["myType"]="[聊天记录]" 
+                    infossaveeone["handletime"]=handletime
                     msgstring=""
                     for tempmsg in msg.content: 
                         if("msg" in tempmsg):
@@ -509,13 +588,14 @@ if __name__ == '__main__':
                         infossaveeone["IsPay"]=0
                         infossaveeone["content"]=""
                         infossaveeone["myType"]="[聊天]"
+                        infossaveeone["handletime"]=handletime
 #----------------------------------------根据聊天记录类型对搜到的或者生成的数据进行赋值--------------------------------
                     if(msg.myType=="[视频]"): 
                         infossaveeone["ZhengMing"]=msg.content
                     else:  
                         if(contentAfterHandle.find("@姜可艾 没有结算完")>-1):
                             cs=1
-                            if(contentAfterHandle.find("2组赞藏")>-1 or contentAfterHandle.find("两组赞藏")>-1):
+                            if(contentAfterHandle.find("2组赞藏")>-1 or contentAfterHandle.find("两组赞藏")>-1 or contentAfterHandle.find("两组")>-1 or contentAfterHandle.find("2组")>-1):
                                 cs=2
                             if(contentAfterHandle.find("关注")>-1):
                                 cs=0
@@ -554,7 +634,7 @@ if __name__ == '__main__':
             for dn2 in dataNode2:
                     if(dn2[4] == info["wxID"] ):
                         info ["MarkID"]=dn2[2]
-                        info ["PayCode"]=dn2[3] 
+                        info ["PayCode"]=dn2[2] 
                         break 
         #先找微信名与数据库完全一样的，因为有的微信名包含在别人微信名里  
         for info in infosToSave:
@@ -564,7 +644,7 @@ if __name__ == '__main__':
                     if(dn2[1] == info["wxID"] ):
                         print(f"{info['wxID']},{dn2[2]}的originName不一致")
                         info ["MarkID"]=dn2[2]
-                        info ["PayCode"]=dn2[3] 
+                        info ["PayCode"]=dn2[2] 
                         break      
         #再找互相包含的    
         for info in infosToSave:
@@ -574,7 +654,7 @@ if __name__ == '__main__':
                     if((dn2[1] in info["wxID"] or info["wxID"] in dn2[1])):
                         print(f"{info['wxID']},{dn2[2]}的originName和wxName都不一致")
                         info ["MarkID"]=dn2[2]
-                        info ["PayCode"]=dn2[3] 
+                        info ["PayCode"]=dn2[2] 
                         break  
         #还是没有找到则插入新微信名到MarkWX表
         MarkID=dataNode2[-1][0]  #最后一个微信号的ID
@@ -660,11 +740,11 @@ if __name__ == '__main__':
             
             if (infosToSave1["wxID"] in CountSummary):
                 CountSummary[infosToSave1["wxID"]]+=(","+wid)
-                CountSummary["内容"+infosToSave1["wxID"]]+=infosToSave1["contentAll"]+"\n\n"
+                CountSummary["内容"+infosToSave1["wxID"]]+=infosToSave1["contentAll"]+infosToSave1["handletime"]+"\n\n"
             else:
                 CountSummary[infosToSave1["wxID"]]=wid
                 CountSummary["列表"+infosToSave1["wxID"]]=[]
-                CountSummary["内容"+infosToSave1["wxID"]]=infosToSave1["contentAll"]
+                CountSummary["内容"+infosToSave1["wxID"]]=infosToSave1["contentAll"]+infosToSave1["handletime"]
             CountSummary["列表"+infosToSave1["wxID"]].extend(widl)
 
 
@@ -763,13 +843,13 @@ if __name__ == '__main__':
                 txml[6] =f"ActualZ:{str(len(zlist))} C:{str(len(clist))} P:{str(len(plist))}\n 赞:\n{zs}\n\n 藏:\n{cs}\n\n 评:{','.join(i[1]+i[3] for i in plist)} "
                 txml[7] =len(zlist)*priceZ+len(clist)*priceC+len(plist)*priceP
             txml[9]=CountSummary[txml[0]] +"\n\n\n拆分后：\n\n"+ "\n".join(CountSummary["列表"+txml[0]])#小红书的账号
-            txml[10]=CountSummary["内容"+txml[0]]#用户发的信息
+            txml[10]=CountSummary["内容"+txml[0]] #用户发的信息
         NotReceiveZC.append((f"微信赞{str(CountSummary['z'])}",f"微信藏{str(CountSummary['c'])}",f"微信评{str(CountSummary['p'])}",f"小红书赞{str(len(ZListConfirm))}藏{str(len(CListConfirm))}评{str(len(OtherListConfirm))}"
                              ,f"自然流量赞:{str(len(ZListConfirm)-(CountSummary['z']-CountSummary['Nz']))}藏:{str(len(CListConfirm)-(CountSummary['c']-CountSummary['Nc']))}评:{str(len(OtherListConfirm)-(CountSummary['p']-CountSummary['Np']))}"
                              ,""))
 #---------------------------------------------------------插入数据库和Excel-----------------------------------------------------------------------------
-        #InsertWXToXHScache(toInsertSqlliteWXXHS)
-        #InsertWXInfoTocache(toInsertSqllite) 
+        InsertWXToXHScache(toInsertSqlliteWXXHS)
+        InsertWXInfoTocache(toInsertSqllite) 
         app = xw.App(visible=False, add_book=False)
         app.display_alerts = False    # 关闭一些提示信息，可以加快运行速度。 默认为 True。
         app.screen_updating = False    # 更新显示工作表的内容。默认为 True。关闭它也可以提升运行速度。
