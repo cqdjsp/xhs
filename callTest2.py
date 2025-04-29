@@ -489,8 +489,8 @@ if __name__ == '__main__':
                 catchlike= int(dataread[3][0])
                 catchMention=int (dataread[3][1])  
         IsZF=True#是否是从转发的窗口获取数据
-        StartText="2025年4月18日 9:20"#"0:25"
-        breakText="0:59"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
+        StartText="昨天 1:29"#"昨天 8:15"#"0:25"#"2025年4月25日 5:48"
+        breakText="8:30"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
         DZDay=endtimes#点赞收藏的哪天
         priceZ=1
         priceC=0.5
