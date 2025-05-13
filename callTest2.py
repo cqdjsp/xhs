@@ -483,20 +483,19 @@ if __name__ == '__main__':
         global cursorsql,sht,sht1,wb,sht3,DZDay
         file_path='config\\config.csv'
         dataread=[]
+        endtimes=[]
         if os.path.exists(file_path): 
             with open(file_path, mode='r', newline='', encoding='utf-8') as file:
                 reader = csv.reader(file)
-                dataread = list(reader)
-                cookie = dataread[0][0]
-                noteToCal=dataread[1]
-                endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in dataread[2] if datadate!=""]
-                if(len(endtimes)==0):
-                    endtimes.append(datetime.date.today()- datetime.timedelta(days=1))
-                catchlike= int(dataread[3][0])
-                catchMention=int (dataread[3][1])  
+                dataread = list(reader) 
+                if(len(dataread)<5):
+                    endtimes.append(datetime.date.today()- datetime.timedelta(days=1)) 
+                else:
+                    endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in dataread[4] if datadate!=""]
+                 
         IsZF=True#是否是从转发的窗口获取数据
-        StartText="2025年5月9日 0:24"#"昨天 8:15"#"0:25"#"2025年4月25日 5:48"
-        breakText="0:00"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
+        StartText="昨天 0:00"#"昨天 8:15"#"0:25"#"2025年4月25日 5:48"
+        breakText="0:01"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
         DZDay=endtimes#点赞收藏的哪天
         priceZ=1
         priceC=0.5
@@ -728,7 +727,9 @@ if __name__ == '__main__':
         NotReceiveZC=[]
         ReceiveZC={} 
         CountSummary={"z":0,"c":0,"p":0,"Nz":0,"Nc":0,"Np":0,}#微信上统计的赞藏评个数，和没收到的赞藏评个数 ;还有 微信号对应的小红书号，内容+微信号 对应的聊天记录
-        for infosToSave1 in infosToSave:
+        sortedInfosToSave = sorted(infosToSave, key=lambda p: p ["MarkID"])
+      
+        for infosToSave1 in sortedInfosToSave:
             CountSummary["z"]+=infosToSave1["IsZ"]
             CountSummary["c"]+=infosToSave1["IsC"]
             CountSummary["p"]+=infosToSave1["IsP"]  
@@ -770,7 +771,8 @@ if __name__ == '__main__':
                                 ReceiveZC[infosToSave1["wxID"]].append(zdata) 
                         else:
                             ReceiveZC[infosToSave1["wxID"]]= [zdata]
-                for ddd in widl: 
+                 
+                for ddd in widl: #看看用户发的小红书号是不是不在里面，好知道用户发的没有点上
                     if(ddd not in findedxhs and "小红薯"+ddd not in findedxhs and "用户"+ddd not in findedxhs):
                         CountSummary["Nz"]+=1
                         payAmountJS-=1*priceZ
@@ -790,7 +792,7 @@ if __name__ == '__main__':
                             if(zdata not in ReceiveZC[infosToSave1["wxID"]]): 
                                 ReceiveZC[infosToSave1["wxID"]].append(zdata) 
                         else:
-                            ReceiveZC[infosToSave1["wxID"]]= [zdata]
+                            ReceiveZC[infosToSave1["wxID"]]= [zdata] 
                 for ddd in widl: 
                     if(ddd not in findedxhs and "小红薯"+ddd not in findedxhs and "用户"+ddd not in findedxhs):
                         CountSummary["Nc"]+=1
@@ -811,7 +813,7 @@ if __name__ == '__main__':
                             if(zdata not in ReceiveZC[infosToSave1["wxID"]]): 
                                 ReceiveZC[infosToSave1["wxID"]].append(zdata) 
                         else:
-                            ReceiveZC[infosToSave1["wxID"]]=[zdata]
+                            ReceiveZC[infosToSave1["wxID"]]=[zdata] 
                 for ddd in widl: 
                     if(ddd not in findedxhs and "小红薯"+ddd not in findedxhs and "用户"+ddd not in findedxhs):
                         CountSummary["Np"]+=1
@@ -841,6 +843,11 @@ if __name__ == '__main__':
                 if(find==False ): 
                     toInsertXML.append([infosToSave1["wxID"],infosToSave1["MarkID"],payAmount,infosToSave1["PayCode"],payLoad,maxC, "",0,payAmountJS,"",""])
 #-------------------------------------------------------------------------------对要插入excel的数据列表进行计算----------------------------------------------------------
+        for wxname in ReceiveZC.keys():
+            for xhsid in ReceiveZC[wxname]:
+                resultCF = [key for key, value in ReceiveZC.items() if key!=wxname and any(xhsid[3] in item for item in value)]#多个人发了同一个小红书号
+                if(len(resultCF)>0):
+                    print(f'！！！！{wxname} 与 {",".join(resultCF)} 重复了 {xhsid[3]}')
         for txml in toInsertXML: 
             if(txml[0] in ReceiveZC) : 
                 zlist=list(filter(lambda x: "赞" in x, ReceiveZC[txml[0]]))
@@ -852,12 +859,13 @@ if __name__ == '__main__':
                 txml[7] =len(zlist)*priceZ+len(clist)*priceC+len(plist)*priceP
             txml[9]=CountSummary[txml[0]] +"\n\n\n拆分后：\n\n"+ "\n".join(CountSummary["列表"+txml[0]])#小红书的账号
             txml[10]=CountSummary["内容"+txml[0]] #用户发的信息
+
         NotReceiveZC.append((f"微信赞{str(CountSummary['z'])}",f"微信藏{str(CountSummary['c'])}",f"微信评{str(CountSummary['p'])}",f"小红书赞{str(len(ZListConfirm))}藏{str(len(CListConfirm))}评{str(len(OtherListConfirm))}"
                              ,f"自然流量赞:{str(len(ZListConfirm)-(CountSummary['z']-CountSummary['Nz']))}藏:{str(len(CListConfirm)-(CountSummary['c']-CountSummary['Nc']))}评:{str(len(OtherListConfirm)-(CountSummary['p']-CountSummary['Np']))}"
                              ,""))
 #---------------------------------------------------------插入数据库和Excel-----------------------------------------------------------------------------
-        InsertWXToXHScache(toInsertSqlliteWXXHS)
-        InsertWXInfoTocache(toInsertSqllite) 
+        #InsertWXToXHScache(toInsertSqlliteWXXHS)
+        #InsertWXInfoTocache(toInsertSqllite) 
         app = xw.App(visible=False, add_book=False)
         app.display_alerts = False    # 关闭一些提示信息，可以加快运行速度。 默认为 True。
         app.screen_updating = False    # 更新显示工作表的内容。默认为 True。关闭它也可以提升运行速度。
@@ -865,8 +873,8 @@ if __name__ == '__main__':
         sht = wb.sheets[0] 
         sht1 =wb.sheets.add(name='无支付码')
         sht3 =wb.sheets.add(name='无赞藏')
-        InsertXMLNotReceive(NotReceiveZC)
-        InsertXML(toInsertXML)
+        #InsertXMLNotReceive(NotReceiveZC)
+        #InsertXML(toInsertXML)
     except Exception as ex:
         print(ex)
         traceback.print_exc()

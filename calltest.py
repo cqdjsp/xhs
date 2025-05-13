@@ -284,17 +284,19 @@ if __name__ == '__main__':
         #--------------------------------------------------------------------------读配置的参数--------------------------------------------
         file_path='config\\config.csv'
         dataread=[]
+        endtimes=[]
         if os.path.exists(file_path): 
             with open(file_path, mode='r', newline='', encoding='utf-8') as file:
                 reader = csv.reader(file)
                 dataread = list(reader)
                 cookie = dataread[0][0]
                 noteToCal=dataread[1]
-                endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in dataread[3] if datadate!=""]
-                if(len(endtimes)==0):
-                    endtimes.append(datetime.date.today()- datetime.timedelta(days=1))
-                catchlike= int(dataread[4][0])
-                catchMention=int (dataread[4][1])  
+                if(len(dataread)<5):
+                    endtimes.append(datetime.date.today()- datetime.timedelta(days=1)) 
+                else:
+                    endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in dataread[4] if datadate!=""]
+                catchlike= int(dataread[3][0])
+                catchMention=int (dataread[3][1])  
                 noteToCalDetail=dataread[2]
         # catchlike=2000#获取100个赞藏数据
         # catchMention=300#获取100个评论数据
