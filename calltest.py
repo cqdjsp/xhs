@@ -251,7 +251,7 @@ def InsertNoteHandleTocache( datas):
             findold=[da for da in dataNodeDZ1 if (da[1]==data["篇"] and da[2]==data["操作人ID"] and da[5]==data["操作类型"] )]
             if (len(findold)>0):
                 print(f'******{data["操作人昵称"]} 对篇{data["篇"]} 与过往重复{data["操作类型"]} 现时间{data["操作时间"]} 过去时间{findold[0][6]}')
-                continue
+                status=0
             toinsert.append((data["篇"] , data["操作人ID"] ,data["操作人昵称"] ,data["操作人头像"],data["操作类型"],data["操作时间"],data["评论内容"],status,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
         # 插入单条数据
         cursorsql.executemany(insert_single_sql, toinsert)
@@ -290,10 +290,12 @@ if __name__ == '__main__':
                 dataread = list(reader)
                 cookie = dataread[0][0]
                 noteToCal=dataread[1]
-                endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in dataread[2] if datadate!=""]
-                catchlike= int(dataread[3][0])
-                catchMention=int (dataread[3][1])  
-                noteToCalDetail=dataread[4]
+                endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in dataread[3] if datadate!=""]
+                if(len(endtimes)==0):
+                    endtimes.append(datetime.date.today()- datetime.timedelta(days=1))
+                catchlike= int(dataread[4][0])
+                catchMention=int (dataread[4][1])  
+                noteToCalDetail=dataread[2]
         # catchlike=2000#获取100个赞藏数据
         # catchMention=300#获取100个评论数据
         # noteToCal=[""]#,"67d546e200000000060284cb"

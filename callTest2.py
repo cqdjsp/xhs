@@ -1,4 +1,8 @@
 # 主群处理
+#.1先查没收到的，无赞藏sheet，看是不是正确，有的人发的小红书号不对，如少发了个特殊字符，这时候给他们加回去。
+#2到sheet1里查有没有“关注”自眼，给他加上钱，因为不自动计算。
+#3.查小红书的 “按小红书查到的计算”列和“按用户发的然后从小红书查找计算”列对比的结果列“按小红书查到的计算==按用户发的然后从小红书查找计算”结果为false的，看看为什么
+#4.看无支付码sheet，里是不是有人已经发支付码了
 from wxautoMy.wxauto  import WeChat
 from  wxautoMy.wxauto import uiautomation as uia
 import xlwings as xw
@@ -206,7 +210,7 @@ def InsertWXToXHScache(infos):
     conn.commit()
 def InsertXMLNotReceive(infos):
     global wb ,sht3
-    sht3.range('A1') .value=['备注号' ,'微信用户名','小红书名',"内容","缺失","备注"] 
+    sht3.range('A1') .value=['备注号' ,'微信用户名','小红书名',"内容","类型","备注"] 
     i=2
     sht3.range('D:D').column_width = 50
     sht3.range('B:B').column_width = 20
@@ -486,11 +490,13 @@ if __name__ == '__main__':
                 cookie = dataread[0][0]
                 noteToCal=dataread[1]
                 endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in dataread[2] if datadate!=""]
+                if(len(endtimes)==0):
+                    endtimes.append(datetime.date.today()- datetime.timedelta(days=1))
                 catchlike= int(dataread[3][0])
                 catchMention=int (dataread[3][1])  
         IsZF=True#是否是从转发的窗口获取数据
-        StartText="昨天 1:29"#"昨天 8:15"#"0:25"#"2025年4月25日 5:48"
-        breakText="8:30"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
+        StartText="2025年5月9日 0:24"#"昨天 8:15"#"0:25"#"2025年4月25日 5:48"
+        breakText="0:00"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
         DZDay=endtimes#点赞收藏的哪天
         priceZ=1
         priceC=0.5
@@ -658,12 +664,14 @@ if __name__ == '__main__':
                         break  
         #还是没有找到则插入新微信名到MarkWX表
         MarkID=dataNode2[-1][0]  #最后一个微信号的ID
+        insertedMarkID=[]
         for info in infosToSave:
-            if(info["MarkID"]!=0):
+            if(info["MarkID"]!=0 or info["wxID"] in insertedMarkID):
                 continue
             MarkID=InsertMarkID(info["wxID"],dataNode2,MarkID)
             if MarkID !=None:
                 info["MarkID"]=MarkID 
+                insertedMarkID.append(info["wxID"])
 #---------------------------获取真实点赞的数据---------------------------
         select_sql = "SELECT * FROM NodeHandleInfo" 
         cursorsql.execute(select_sql)
@@ -767,7 +775,7 @@ if __name__ == '__main__':
                         CountSummary["Nz"]+=1
                         payAmountJS-=1*priceZ
                         payLoad+=f"\n——{ddd}:Z{str(priceZ)}  "
-                        remark=""
+                        remark="未收到"
                         if(ddd in dataNodeDZ1FailedXHSID):
                             remark="收到,但不符合要求"
                         NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,infosToSave1["content"],"赞",remark))
@@ -788,7 +796,7 @@ if __name__ == '__main__':
                         CountSummary["Nc"]+=1
                         payAmountJS-=1*priceC
                         payLoad+=f"\n——{ddd}:C{str(priceC)}  "
-                        remark=""
+                        remark="未收到"
                         if(ddd in dataNodeDZ1FailedXHSID):
                             remark="收到,但不符合要求"
                         NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,infosToSave1["content"],"藏",remark))
@@ -809,7 +817,7 @@ if __name__ == '__main__':
                         CountSummary["Np"]+=1
                         payAmountJS-=1*priceP
                         payLoad+=f"\n——{ddd}:P{str(priceP)}"
-                        remark=""
+                        remark="未收到"
                         if(ddd in dataNodeDZ1FailedXHSID):
                             remark="收到,但不符合要求"
                         NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,infosToSave1["content"],"评",remark)) 
