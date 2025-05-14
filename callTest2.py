@@ -1,7 +1,8 @@
 # 主群处理
 #.1先查没收到的，无赞藏sheet，看是不是正确，有的人发的小红书号不对，如少发了个特殊字符，这时候给他们加回去。
-#2到sheet1里查有没有“关注”自眼，给他加上钱，因为不自动计算。
+#2到sheet1里查有没有“关注”字眼，给他加上钱，因为不自动计算。
 #3.查小红书的 “按小红书查到的计算”列和“按用户发的然后从小红书查找计算”列对比的结果列“按小红书查到的计算==按用户发的然后从小红书查找计算”结果为false的，看看为什么
+#3.1如果不是true，看是否有不同人但是小红书号名字一样，导致给他多结算了，要按照用户发的结算
 #4.看无支付码sheet，里是不是有人已经发支付码了
 from wxautoMy.wxauto  import WeChat
 from  wxautoMy.wxauto import uiautomation as uia
@@ -210,9 +211,9 @@ def InsertWXToXHScache(infos):
     conn.commit()
 def InsertXMLNotReceive(infos):
     global wb ,sht3
-    sht3.range('A1') .value=['备注号' ,'微信用户名','小红书名',"内容","类型","备注"] 
+    sht3.range('A1') .value=['备注号' ,'微信用户名','小红书名',"类型","备注","内容"] 
     i=2
-    sht3.range('D:D').column_width = 50
+    sht3.range('F:F').column_width = 50
     sht3.range('B:B').column_width = 20
     sht3.range('C:C').column_width = 20
     for info in infos: 
@@ -225,37 +226,45 @@ def InsertXML(infos):
     global sht,wb ,sht1,DZDay
     wxdata=[{}]#[{"wx":"wx用户名"，"xhs":"xhs用户名","z":"1","C":"1","P":"0","sp":"视频证明地址"}]
     # 将a1,a2,a3输入第一列，b1,b2,b3输入第二列
-    header=['微信用户名','备注号' ,"按用户发的计算","支付码图","按小红书查到的计算","金额计算过程","操作账号个数","实际操作数","按用户发的然后从小红书查找计算","小红书账号","信息内容","按小红书查到的计算==按用户发的然后从小红书查找计算"] 
-    sht.range('A1') .value=header
+    header=['微信用户名','备注号' ,"按用户发的计算","支付码图","按小红书查到的计算","按用户发的然后从小红书查找计算","按小红书查到的计算==按用户发的然后从小红书查找计算","金额计算过程","操作账号个数","实际操作数","小红书账号","信息内容"] 
     sht1.range('A1') .value=header#没有支付码的人
-    sht1.range('F:F').column_width = 40
+    # sht1.range('F:F').column_width = 15
+    # sht1.range('G:G').column_width = 15
     sht1.range('H:H').column_width = 40
-    sht1.range('K:K').column_width = 40
-    sht.range('F:F').column_width = 40
+    sht1.range('G:G').column_width = 40
+    sht1.range('J:J').column_width = 40
+    sht1.range('K:K').column_width = 15
+    sht1.range('L:L').column_width = 40
+
+    sht.range('A1') .value=header
+    # sht.range('F:F').column_width = 15
+    # sht.range('G:G').column_width = 15 
     sht.range('H:H').column_width = 40
-    sht.range('K:K').column_width = 40
-    sht.range('J:J').column_width = 15
+    sht.range('G:G').column_width = 10
+    sht.range('J:J').column_width = 40
+    sht.range('K:K').column_width = 15
+    sht.range('L:L').column_width = 40 
     i=2
     sht1i=2
     nopaycode=""
     paycodeMarkID=""
     for info in infos: 
         path=f'config\\zfcode\\{int(info[3])}.jpg'
-        insertList=list((info[0],info[1],info[2],info[3],info[7],info[4],info[5],info[6],info[8],info[9],info[10]))
+        insertList=list((info[0],info[1],info[2],info[3],info[7],info[8],None,info[4],info[5],info[6],info[9],info[10]))
         
-        if(int(info[3])==0):
+        if(int(info[3])==0):#没有支付码的
             nopaycode+=f"@{info[0]}"
             paycodeMarkID+=f",{info[1]}"
             sht1.range(f'E{sht1i}').api.WrapText = True
             sht1.range(f'A{sht1i}') .value=insertList
-            sht1.range(f'L{sht1i}').formula = f'=E{sht1i}=I{sht1i}'
+            sht1.range(f'G{sht1i}').formula = f'=E{sht1i}=F{sht1i}'
             sht1i+=1
 
         else: 
             if(os.path.exists(path)):
-                sht.range(f'L{i}').formula = f'=E{i}=I{i}'
                 sht.range(f'E{i}').api.WrapText = True
                 sht.range(f'A{i}') .value=insertList
+                sht.range(f'G{i}').formula = f'=E{i}=F{i}'
                 filePath = os.path.join(os.getcwd(),path )
                 add_center(sht, 'D'+str(i), filePath, width=350, height=350)
                 i+=1  
@@ -263,6 +272,7 @@ def InsertXML(infos):
                 print(f"{info[0]},MarkID{info[1]}在数据库有paycode但是没有文件")
                 sht1.range(f'E{sht1i}').api.WrapText = True
                 sht1.range(f'A{sht1i}') .value=insertList
+                sht1.range(f'G{sht1i}').formula = f'=E{sht1i}=F{sht1i}'
                 nopaycode+=f"@{info[0]}"
                 paycodeMarkID+=f",{info[1]}"
                 sht1i+=1
@@ -494,8 +504,8 @@ if __name__ == '__main__':
                     endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in dataread[4] if datadate!=""]
                  
         IsZF=True#是否是从转发的窗口获取数据
-        StartText="昨天 0:00"#"昨天 8:15"#"0:25"#"2025年4月25日 5:48"
-        breakText="0:01"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
+        StartText="昨天 0:01"#"昨天 8:15"#"0:25"#"2025年4月25日 5:48"
+        breakText="0:32"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
         DZDay=endtimes#点赞收藏的哪天
         priceZ=1
         priceC=0.5
@@ -780,7 +790,7 @@ if __name__ == '__main__':
                         remark="未收到"
                         if(ddd in dataNodeDZ1FailedXHSID):
                             remark="收到,但不符合要求"
-                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,infosToSave1["content"],"赞",remark))
+                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,"赞",remark,infosToSave1["content"]))
             findedxhs.clear()
             if(infosToSave1["IsC"]>0): 
                 dataNodeDZ1FailedXHSID=  GetXHSID(dataNodeDZ1Failed,"收藏")
@@ -801,7 +811,7 @@ if __name__ == '__main__':
                         remark="未收到"
                         if(ddd in dataNodeDZ1FailedXHSID):
                             remark="收到,但不符合要求"
-                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,infosToSave1["content"],"藏",remark))
+                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,"藏",remark,infosToSave1["content"]))
             findedxhs.clear()
             if(infosToSave1["IsP"]>0):
                 dataNodeDZ1FailedXHSID=  GetXHSID(dataNodeDZ1Failed,"评论")
@@ -822,7 +832,7 @@ if __name__ == '__main__':
                         remark="未收到"
                         if(ddd in dataNodeDZ1FailedXHSID):
                             remark="收到,但不符合要求"
-                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,infosToSave1["content"],"评",remark)) 
+                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,"评",remark,infosToSave1["content"])) 
 #--------------------------------------------------------------------数据库列表的组装-------------------------------------------------------------                
             toInsertSqllite.append((infosToSave1["wxID"],infosToSave1["xhsID"],infosToSave1["IsZ"],infosToSave1["IsC"],infosToSave1["IsP"],infosToSave1["ZhengMing"],
                                     infosToSave1["IsConfirm"],infosToSave1["IsPay"],datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S"),infosToSave1["content"],infosToSave1["contentAll"]))
@@ -873,8 +883,8 @@ if __name__ == '__main__':
         sht = wb.sheets[0] 
         sht1 =wb.sheets.add(name='无支付码')
         sht3 =wb.sheets.add(name='无赞藏')
-        #InsertXMLNotReceive(NotReceiveZC)
-        #InsertXML(toInsertXML)
+        InsertXMLNotReceive(NotReceiveZC)
+        InsertXML(toInsertXML)
     except Exception as ex:
         print(ex)
         traceback.print_exc()
