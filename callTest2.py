@@ -315,7 +315,7 @@ def LoadFromZFMulty():
                                     pass
                                 find=False
                                 for mg in msgszfzf:
-                                    if(mg.content==text_control.Name and mg.sender==textbox1.Name):
+                                    if(mg.content==text_control.Name and mg.sender==textbox1.Name and mg.time== textbox2.Name):
                                         find=True
                                         break
                                 date_time = datetime.datetime.strptime(textbox2.Name, "%m-%d %H:%M:%S")
@@ -331,7 +331,7 @@ def LoadFromZFMulty():
                             textbox3=MsgItem2.TextControl(searchDepth=10,foundIndex=3)
                             find=False
                             for mg in msgs:
-                                if(mg.content==textbox3.Name and mg.sender==textbox1.Name):
+                                if(mg.content==textbox3.Name and mg.sender==textbox1.Name and mg.time== textbox2.Name):
                                     find=True
                                     break
                             date_time = datetime.datetime.strptime(textbox2.Name, "%m-%d %H:%M:%S")
@@ -488,6 +488,13 @@ def loadMoreCleaver(AreaText):
             AreaText=AreaText
         ) 
     return tempMsg 
+def InsertPayDetail(toinsertInfo):
+    global cursorsql
+    insert_single_sql = '''INSERT INTO PayDetail (WXName, WXID ,AmountByXHS , AmountByUser  ,  ComputeDetail, DoCounts, ComputeDetailXHS ,DOIDS , Message  ,Remarks  ,Type ,HandleDate,InsertDate)
+     VALUES (?, ?,?,?,?, ?,?,?,?, ?,?,?,?)'''      
+    cursorsql.executemany(insert_single_sql, toinsertInfo)
+    conn.commit()
+             
 if __name__ == '__main__':
     try:  
         global cursorsql,sht,sht1,wb,sht3,DZDay
@@ -498,14 +505,15 @@ if __name__ == '__main__':
             with open(file_path, mode='r', newline='', encoding='utf-8') as file:
                 reader = csv.reader(file)
                 dataread = list(reader) 
-                if(len(dataread)<5):
+                timetohandle=dataread[5]
+                if(len(dataread)<5 or timetohandle[0]=="" or (timetohandle[0]!="" and datetime.date.today()< datetime.datetime.strptime(timetohandle[0], "%Y/%m/%d").date())):
                     endtimes.append(datetime.date.today()- datetime.timedelta(days=1)) 
                 else:
-                    endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in dataread[4] if datadate!=""]
-                 
+                    endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in timetohandle if datadate!=""]
+                
         IsZF=True#是否是从转发的窗口获取数据
-        StartText="昨天 0:01"#"昨天 8:15"#"0:25"#"2025年4月25日 5:48"
-        breakText="0:32"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
+        StartText="昨天 0:54"#"昨天 8:15"#"0:25"#"2025年4月25日 5:48"
+        breakText="3:14"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
         DZDay=endtimes#点赞收藏的哪天
         priceZ=1
         priceC=0.5
@@ -853,6 +861,7 @@ if __name__ == '__main__':
                 if(find==False ): 
                     toInsertXML.append([infosToSave1["wxID"],infosToSave1["MarkID"],payAmount,infosToSave1["PayCode"],payLoad,maxC, "",0,payAmountJS,"",""])
 #-------------------------------------------------------------------------------对要插入excel的数据列表进行计算----------------------------------------------------------
+        toinsertPayDetail=[]
         for wxname in ReceiveZC.keys():
             for xhsid in ReceiveZC[wxname]:
                 resultCF = [key for key, value in ReceiveZC.items() if key!=wxname and any(xhsid[3] in item for item in value)]#多个人发了同一个小红书号
@@ -869,13 +878,21 @@ if __name__ == '__main__':
                 txml[7] =len(zlist)*priceZ+len(clist)*priceC+len(plist)*priceP
             txml[9]=CountSummary[txml[0]] +"\n\n\n拆分后：\n\n"+ "\n".join(CountSummary["列表"+txml[0]])#小红书的账号
             txml[10]=CountSummary["内容"+txml[0]] #用户发的信息
-
+            payDetailRemark=""
+            if(txml[3]==0):
+                payDetailRemark="无支付码"
+            toinsertPayDetail.append([txml[0],txml[1],txml[7],txml[8],txml[4],txml[5],txml[6],txml[9],txml[10],payDetailRemark,"支付情况",f'{min(DZDay).strftime("%d")}-{max(DZDay).strftime("%d")}', datetime.datetime.today()])
         NotReceiveZC.append((f"微信赞{str(CountSummary['z'])}",f"微信藏{str(CountSummary['c'])}",f"微信评{str(CountSummary['p'])}",f"小红书赞{str(len(ZListConfirm))}藏{str(len(CListConfirm))}评{str(len(OtherListConfirm))}"
                              ,f"自然流量赞:{str(len(ZListConfirm)-(CountSummary['z']-CountSummary['Nz']))}藏:{str(len(CListConfirm)-(CountSummary['c']-CountSummary['Nc']))}评:{str(len(OtherListConfirm)-(CountSummary['p']-CountSummary['Np']))}"
                              ,""))
+        for nrzc in NotReceiveZC:
+            toinsertPayDetail.append([nrzc[1],nrzc[0],0,0,"",0,nrzc[3],nrzc[2],nrzc[5],nrzc[4],"无赞藏",f'{min(DZDay).strftime("%d")}-{max(DZDay).strftime("%d")}', datetime.datetime.today()])
+#-------------------------------------------------------------------------------将excel数据插入数据库----------------------------------------------------------
+
+
 #---------------------------------------------------------插入数据库和Excel-----------------------------------------------------------------------------
-        #InsertWXToXHScache(toInsertSqlliteWXXHS)
-        #InsertWXInfoTocache(toInsertSqllite) 
+        InsertWXToXHScache(toInsertSqlliteWXXHS)
+        InsertWXInfoTocache(toInsertSqllite) 
         app = xw.App(visible=False, add_book=False)
         app.display_alerts = False    # 关闭一些提示信息，可以加快运行速度。 默认为 True。
         app.screen_updating = False    # 更新显示工作表的内容。默认为 True。关闭它也可以提升运行速度。
@@ -885,6 +902,7 @@ if __name__ == '__main__':
         sht3 =wb.sheets.add(name='无赞藏')
         InsertXMLNotReceive(NotReceiveZC)
         InsertXML(toInsertXML)
+        InsertPayDetail(toinsertPayDetail)
     except Exception as ex:
         print(ex)
         traceback.print_exc()

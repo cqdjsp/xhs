@@ -221,40 +221,71 @@ def InsertNoteInfoTocache(note_id ,xsec_token ,user_id , nickname="", title="", 
     # 提交事务，将更改保存到数据库
     conn.commit()
 def InsertNoteHandleTocache( datas):
-    global cursorsql,InEncry,InNormal,noteToCalDetail,noteToCal
+    global cursorsql,InEncry,InNormal,noteToCalDetail,noteToCal,notehandletimeNo
     select_sql = "SELECT * FROM NodeHandleInfo" 
     cursorsql.execute(select_sql)
     # 获取所有查询结果
     dataNodeDZ1 = cursorsql.fetchall() 
      
-    if(InNormal):
+    if(InNormal):  
+        select_sql = "SELECT * FROM NodeTextInfo"
+        # 执行查询语句
+        cursorsql.execute(select_sql)
+        # 获取所有查询结果
+        NodeTexts = cursorsql.fetchall()
         # 定义插入单条数据的 SQL 语句
         insert_single_sql = '''INSERT INTO NodeHandleInfo (noteID ,handleUserID , handleUserName, handleUserImage, handleType , handleTime ,mentionContent ,status,addtime)
         VALUES (?,?,?,?,?,?,?,?,?)'''
         toinsert=[]
+        countDT={}#当天发布那篇的赞藏数，用来处理点的超过50的数据status置0
         for data in datas:
             status=1
+            notehandletime=datetime.datetime.strptime(data["操作时间"], "%Y-%m-%d %H:%M:%S")
+#-----------------------------------------------------------------------------处理新发的当天只收50赞50藏----------------------------------------------
+            currentHandleDate=notehandletime.date()
+            key=data["篇"]+data["操作类型"]
+            if( key in countDT):
+                countDT[key]+=1
+            else:
+                countDT[key]=1            
+            if(countDT[key]>52 and currentHandleDate in endtimes and  datetime.datetime.strptime([datac for datac in NodeTexts if datac[1]==data["篇"] ][0][7], "%Y-%m-%d %H:%M:%S").date()==currentHandleDate):
+                status=0            
+#-------------------------------------------------------------------------------处理重复操作了的数据--------------------------------------------------
             if(len([dataC for dataC in toinsert  if dataC[0]==data["篇"] and dataC[1]==data["操作人ID"] and dataC[4]==data["操作类型"]])>0):
                 status=0
                 print(f'******{data["操作人昵称"]} 对篇{data["篇"]} 操作重复了{data["操作类型"]}')
+#-----------------------------------------------------------------------------处理只要点赞或者收藏等不要全部的情况;处理某个时间后不再收赞或藏或评了--------------------------------------
             for i,ele in enumerate(noteToCal):
                 if data["篇"]==ele:
-                    if noteToCalDetail[i][0]!="1" and data["操作类型"]=="赞":
-                        status=0
-                    elif noteToCalDetail[i][1]!="1" and data["操作类型"]=="收藏":
-                        status=0
-                    elif noteToCalDetail[i][2]!="1" and data["操作类型"]=="评论":
-                        status=0
+                    notetimeNoList=notehandletimeNo[i].replace("\n","").split(";")
+                    if  data["操作类型"]=="赞":
+                        if noteToCalDetail[i][0]!="1":
+                            status=0
+                        if(notehandletime>datetime.datetime.strptime(notetimeNoList[0], "%Y/%m/%d %H:%M:%S")):
+                            status=0
+                    elif data["操作类型"]=="收藏":
+                        if noteToCalDetail[i][1]!="1":
+                            status=0
+                        if(notehandletime>datetime.datetime.strptime(notetimeNoList[1], "%Y/%m/%d %H:%M:%S")):
+                            status=0
+                    elif data["操作类型"]=="评论":
+                        if noteToCalDetail[i][2]!="1":
+                            status=0
+                        if(notehandletime>datetime.datetime.strptime(notetimeNoList[2], "%Y/%m/%d %H:%M:%S")):
+                            status=0
+#------------------------------------------------------------------------打印出来不合要求的数据---------------------------------------------------
                 if(status==0):    
                     print(f'******{data["操作人昵称"]} 对篇{data["篇"]} 操作 {data["操作类型"]} 不和要求')
                     break
             findold=[da for da in dataNodeDZ1 if (da[1]==data["篇"] and da[2]==data["操作人ID"] and da[5]==data["操作类型"] )]
             if (len(findold)>0):
-                print(f'******{data["操作人昵称"]} 对篇{data["篇"]} 与过往重复{data["操作类型"]} 现时间{data["操作时间"]} 过去时间{findold[0][6]}')
+                print(f'******{data["操作人昵称"]} 对篇{data["篇"]} 的{data["操作类型"]} 与过往重复，时间:{data["操作时间"]} ,{findold[0][6]}')
                 status=0
             toinsert.append((data["篇"] , data["操作人ID"] ,data["操作人昵称"] ,data["操作人头像"],data["操作类型"],data["操作时间"],data["评论内容"],status,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
         # 插入单条数据
         cursorsql.executemany(insert_single_sql, toinsert)
+        for key in countDT:
+            print(f"{key} 有{countDT[key]}个")
     if(InEncry):
         InsertNoteHandleTocacheEncry(datas)
     # # 定义插入多条数据的 SQL 语句
@@ -277,7 +308,7 @@ def xor_encrypt_decrypt(text, key=1123):
 if __name__ == '__main__':
     try:  
         global xhs_client
-        global handleType,noteToCal,endtimes,InNormal,InEncry,noteToCalDetail
+        global handleType,noteToCal,endtimes,InNormal,InEncry,noteToCalDetail,notehandletimeNo
         InEncry=False
         InNormal=True
         cookie = " "
@@ -291,13 +322,15 @@ if __name__ == '__main__':
                 dataread = list(reader)
                 cookie = dataread[0][0]
                 noteToCal=dataread[1]
-                if(len(dataread)<5):
+                timetohandle=dataread[5]
+                if(len(dataread)<5 or timetohandle[0]=="" or (timetohandle[0]!="" and datetime.date.today()< datetime.datetime.strptime(timetohandle[0], "%Y/%m/%d").date())):
                     endtimes.append(datetime.date.today()- datetime.timedelta(days=1)) 
                 else:
-                    endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in dataread[4] if datadate!=""]
-                catchlike= int(dataread[3][0])
-                catchMention=int (dataread[3][1])  
+                    endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in timetohandle if datadate!=""]
+                catchlike= int(dataread[4][0])
+                catchMention=int (dataread[4][1])  
                 noteToCalDetail=dataread[2]
+                notehandletimeNo=dataread[3]
         # catchlike=2000#获取100个赞藏数据
         # catchMention=300#获取100个评论数据
         # noteToCal=[""]#,"67d546e200000000060284cb"
@@ -315,7 +348,8 @@ if __name__ == '__main__':
         data =GetInfoBySeq(catchlike,catchMention)
         #data=[{ "篇":1 , "操作人ID":1,"操作人昵称":1 ,"操作人头像":1,"操作类型":1,"操作时间":1,"评论内容":1},{ "篇":2 , "操作人ID":2,"操作人昵称":2 ,"操作人头像":2,"操作类型":2,"操作时间":2,"评论内容":2},
               #{ "篇":1 , "操作人ID":1,"操作人昵称":1 ,"操作人头像":1,"操作类型":1,"操作时间":1,"评论内容":1}]
-        InsertNoteHandleTocache(data)
+        sorted_list = sorted(data, key=lambda x: datetime.datetime.strptime(x["操作时间"], "%Y-%m-%d  %H:%M:%S"))
+        InsertNoteHandleTocache(sorted_list)
 
         #dataread=[]
         # if os.path.exists(file_path): 
