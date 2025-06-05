@@ -49,9 +49,9 @@ def remove_brackets_content(s):
 def GetInfoBySeq(catchlike,catchMention):
     global cursorsql,noteToCal,endtimes
     # 定义查询数据的 SQL 语句
-    select_sql = "SELECT * FROM NodeTextInfoEncry"
+    select_sql = "SELECT id,note_id,xsec_token,user_id,nickname,title,desc,time,likecount,collectedcount,commentcount,sharecount,image FROM NodeTextInfoEncry"
     if(InNormal):
-        select_sql = "SELECT * FROM NodeTextInfo"
+        select_sql = "SELECT id,note_id,xsec_token,user_id,nickname,title,desc,time,likecount,collectedcount,commentcount,sharecount,image  FROM NodeTextInfo"
     # 执行查询语句
     cursorsql.execute(select_sql)
     # 获取所有查询结果
@@ -222,13 +222,13 @@ def InsertNoteInfoTocache(note_id ,xsec_token ,user_id , nickname="", title="", 
     conn.commit()
 def InsertNoteHandleTocache( datas):
     global cursorsql,InEncry,InNormal,noteToCalDetail,noteToCal,notehandletimeNo
-    select_sql = "SELECT * FROM NodeHandleInfo" 
+    select_sql = "SELECT  ID, noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime FROM NodeHandleInfo" 
     cursorsql.execute(select_sql)
     # 获取所有查询结果
     dataNodeDZ1 = cursorsql.fetchall() 
      
     if(InNormal):  
-        select_sql = "SELECT * FROM NodeTextInfo"
+        select_sql = "SELECT id,note_id,xsec_token,user_id,nickname,title,desc,time,likecount,collectedcount,commentcount,sharecount,image  FROM NodeTextInfo"
         # 执行查询语句
         cursorsql.execute(select_sql)
         # 获取所有查询结果
@@ -258,21 +258,25 @@ def InsertNoteHandleTocache( datas):
             for i,ele in enumerate(noteToCal):
                 if data["篇"]==ele:
                     notetimeNoList=notehandletimeNo[i].replace("\n","").split(";")
-                    if  data["操作类型"]=="赞":
-                        if noteToCalDetail[i][0]!="1":
-                            status=0
-                        if(notehandletime>datetime.datetime.strptime(notetimeNoList[0], "%Y/%m/%d %H:%M:%S")):
-                            status=0
-                    elif data["操作类型"]=="收藏":
-                        if noteToCalDetail[i][1]!="1":
-                            status=0
-                        if(notehandletime>datetime.datetime.strptime(notetimeNoList[1], "%Y/%m/%d %H:%M:%S")):
-                            status=0
-                    elif data["操作类型"]=="评论":
-                        if noteToCalDetail[i][2]!="1":
-                            status=0
-                        if(notehandletime>datetime.datetime.strptime(notetimeNoList[2], "%Y/%m/%d %H:%M:%S")):
-                            status=0
+                    try:
+                        if  data["操作类型"]=="赞":
+                            if noteToCalDetail[i][0]!="1":
+                                status=0
+                            if(notehandletime>datetime.datetime.strptime(notetimeNoList[0], "%Y/%m/%d %H:%M:%S")):
+                                status=0
+                        elif data["操作类型"]=="收藏":
+                            if noteToCalDetail[i][1]!="1":
+                                status=0
+                            if(notehandletime>datetime.datetime.strptime(notetimeNoList[1], "%Y/%m/%d %H:%M:%S")):
+                                status=0
+                        elif data["操作类型"]=="评论":
+                            if noteToCalDetail[i][2]!="1":
+                                status=0
+                            if(notehandletime>datetime.datetime.strptime(notetimeNoList[2], "%Y/%m/%d %H:%M:%S")):
+                                status=0
+                    except Exception as ex:
+                        print(ex)
+                        traceback.print_exc()                        
 #------------------------------------------------------------------------打印出来不合要求的数据---------------------------------------------------
                 if(status==0):    
                     print(f'******{data["操作人昵称"]} 对篇{data["篇"]} 操作 {data["操作类型"]} 不和要求')
@@ -324,7 +328,7 @@ if __name__ == '__main__':
                 noteToCal=dataread[1]
                 timetohandle=dataread[5]
                 if(len(dataread)<5 or timetohandle[0]=="" or (timetohandle[0]!="" and datetime.date.today()< datetime.datetime.strptime(timetohandle[0], "%Y/%m/%d").date())):
-                    endtimes.append(datetime.date.today()- datetime.timedelta(days=1)) 
+                    endtimes.append(datetime.date.today()- datetime.timedelta(days=1)) #
                 else:
                     endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in timetohandle if datadate!=""]
                 catchlike= int(dataread[4][0])

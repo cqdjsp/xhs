@@ -14,6 +14,7 @@ import traceback
 from PIL import Image
 import time
 import csv
+import re
 class DHMsg:
     def __init__(self, type, myType,sender,content,time,fromw):
         self.type = type
@@ -110,7 +111,7 @@ def InsertMarkID(name,odata,MarkID):
             cursorsql.execute(insert_single_sql, (name,MarkID+1,0,name,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
             # 提交事务，将更改保存到数据库
             conn.commit() 
-            return  cursorsql.lastrowid
+            return  MarkID+1
 def CreateTableWxInfo():
     global cursorsql
     create_table_sql = '''
@@ -169,7 +170,7 @@ def InsertWXInfoTocache(infos):
     # 提交事务，将更改保存到数据库
     conn.commit()
 def InsertWXToXHScache(infos):
-    select_sql = "SELECT * FROM WXToXHSInfo"
+    select_sql = "SELECT id,wxID,xhsID,AddTime,PayCode,MarkID FROM WXToXHSInfo"
     # 执行查询语句
     global cursorsql
     cursorsql.execute(select_sql)
@@ -460,9 +461,64 @@ def GetXHSID(xhsIDs,type):
     dataNodeDZ1FailedXHSID.extend([data.replace("小红薯","")  for data in  dataNodeDZ1FailedXHSID if "小红薯" in data])
     dataNodeDZ1FailedXHSID.extend([data.replace("用户","")  for data in  dataNodeDZ1FailedXHSID if "用户" in data])
     return dataNodeDZ1FailedXHSID
+
+def parse_wechat_time(time_str):
+    # 获取当前日期和时间
+    now = datetime.datetime.now()
+    today = now.date()
+    year = now.year
+    month = now.month
+
+    # 正则表达式匹配不同格式
+    patterns = [
+        # 模式1：具体日期（如：2025年4月25日 5:48）
+        r'^(\d{4})年(\d{1,2})月(\d{1,2})日 (\d{1,2}):(\d{2})$',
+        # 模式2：星期+时间（如：星期一 9:40）
+        r'^(星期一|星期二|星期三|星期四|星期五|星期六|星期天) (\d{1,2}):(\d{2})$',
+        # 模式3：昨天+时间（如：昨天 9:40）
+        r'^昨天 (\d{1,2}):(\d{2})$',
+        # 模式4：仅时间（如：9:40，默认当天）
+        r'^(\d{1,2}):(\d{2})$'
+    ]
+
+    for pattern in patterns:
+        match = re.match(pattern, time_str)
+        if match:
+            if pattern == patterns[0]:
+                # 模式1：解析年/月/日
+                y, m, d, h, mi = match.groups()
+                return datetime.datetime(int(y), int(m), int(d), int(h), int(mi))
+            elif pattern == patterns[1]:
+                # 模式2：解析星期（需计算对应日期）
+                week_day = match.group(1)
+                h, mi = match.group(2), match.group(3)
+                # 计算当前星期几（0=星期一，1=星期二，...，6=星期日）
+                current_weekday = now.weekday()  # 0=星期一，6=星期日
+                target_weekday = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期天'].index(week_day)
+                # 计算距离今天的天数差（负数表示过去，正数表示未来）
+                delta_days = target_weekday - current_weekday
+                if delta_days < 0:
+                    delta_days += 7  # 处理跨周情况
+                target_date = today - datetime.timedelta(days=(7 - delta_days)) if delta_days != 0 else today
+                return datetime.datetime(target_date.year, target_date.month, target_date.day, int(h), int(mi))
+            elif pattern == patterns[2]:
+                # 模式3：昨天的日期
+                h, mi = match.groups()
+                yesterday = today - datetime.timedelta(days=1)
+                return datetime.datetime(yesterday.year, yesterday.month, yesterday.day, int(h), int(mi))
+            elif pattern == patterns[3]:
+                # 模式4：今天的时间
+                h, mi = match.groups()
+                return datetime.datetime(year, month, today.day, int(h), int(mi))
+    # 若无法匹配，抛出异常或返回当前时间
+    raise ValueError(f"无法解析的时间格式：{time_str}")
 def loadMoreCleaver(AreaText):
-    startText=AreaText[0]
-    tempMsg=[]
+    global StartText,breakText
+    sText=AreaText[0]
+    bText=AreaText[1]
+    tempMsg=[] 
+    needSetStartText= True if StartText==None else False
+    needSetBreakText= True if breakText==None else False
     while(True) :
         tempMsg=wx.GetAllMessage(
                 savepic   = False,   # 保存图片
@@ -470,9 +526,26 @@ def loadMoreCleaver(AreaText):
                 savevoice = False,    # 保存语音转文字内容
                 saveVideo=False,
                 saveZF=False,
-                AreaText=AreaText
+                AreaText=(AreaText[0],None)
             ) 
-        if (startText!="" and  len([msg for msg in tempMsg if startText in msg.content])>0):
+        canbreak=False 
+        for msg in tempMsg:
+            if msg.type == 'time'  :
+                if sText > parse_wechat_time(msg.content).date():
+                    canbreak=True
+                else:
+                    if(needSetStartText):
+                        StartText=msg.content
+                    break
+        if (canbreak==True):
+            for msg in reversed(tempMsg):
+                if msg.type == 'time'  :
+                    if bText!= parse_wechat_time(msg.content).date():
+                        if(needSetBreakText):
+                            breakText=msg.content
+                        continue
+                    else:
+                        break
             break
         elif(wx.LoadMoreMessage()):
             print("向上滚动")   
@@ -497,7 +570,7 @@ def InsertPayDetail(toinsertInfo):
              
 if __name__ == '__main__':
     try:  
-        global cursorsql,sht,sht1,wb,sht3,DZDay
+        global cursorsql,sht,sht1,wb,sht3,DZDay,StartText,breakText
         file_path='config\\config.csv'
         dataread=[]
         endtimes=[]
@@ -512,8 +585,8 @@ if __name__ == '__main__':
                     endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in timetohandle if datadate!=""]
                 
         IsZF=True#是否是从转发的窗口获取数据
-        StartText="昨天 0:54"#"昨天 8:15"#"0:25"#"2025年4月25日 5:48"
-        breakText="3:14"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44
+        StartText=None# "2025年5月30日 3:14"#"昨天 8:15"#"0:25"#"2025年4月25日 5:48" 如果是None会根据配置自动找到开始统计的地方
+        breakText=None#"0:12"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44 如果是None会根据配置自动找到结束统计的地方
         DZDay=endtimes#点赞收藏的哪天
         priceZ=1
         priceC=0.5
@@ -528,7 +601,7 @@ if __name__ == '__main__':
         msgsZF=[]
         msgsZF.extend(LoadFromZFMulty())
         msgsC =[]
-        msgsC.extend(loadMoreCleaver((StartText,breakText)))
+        msgsC.extend(loadMoreCleaver((DZDay[0],DZDay[-1])))#-----------------向上滚动到开始统计的日期--------------
         msgs=[]
         msgs.extend(msgsC)
         msgs.extend(msgsZF)
@@ -646,7 +719,7 @@ if __name__ == '__main__':
                 pass
                 #print(f'【撤回消息】{msg.content}')
 #---------------------------------------------------------找PayCOde和MarkID-----------------------------------------------------------------------------
-        select_sql = "SELECT * FROM MarkWX" 
+        select_sql = "SELECT ID,wxName,MarkID,PayCode,OriginName,AddTime,Status,NeedPay FROM MarkWX" 
         cursorsql.execute(select_sql)
         # 获取所有查询结果
         dataNode2 = cursorsql.fetchall()   
@@ -690,7 +763,7 @@ if __name__ == '__main__':
                 info["MarkID"]=MarkID 
                 insertedMarkID.append(info["wxID"])
 #---------------------------获取真实点赞的数据---------------------------
-        select_sql = "SELECT * FROM NodeHandleInfo" 
+        select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime FROM NodeHandleInfo" 
         cursorsql.execute(select_sql)
         # 获取所有查询结果
         dataNodeDZ1 = cursorsql.fetchall() 
