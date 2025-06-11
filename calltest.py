@@ -88,8 +88,8 @@ def GetInfoBySeq(catchlike,catchMention):
             if(incurrectDay==False):continue
             if( noteInfo['type'] in handleType):
                     noteID=noteInfo['item_info']['id'] if 'liked/item' ==noteInfo['type'] else noteInfo['item_info']["attach_item_info"]["id"] 
-                    if(noteID not in  noteToCal):
-                        continue
+                    # if(noteID not in  noteToCal):
+                    #     continue
                     noteSec=noteInfo['item_info']['xsec_token'] if 'liked/item' ==noteInfo['type'] else noteInfo['item_info']["attach_item_info"]["xsec_token"] 
                     find=False
                     for notedatacache in dataNode:
@@ -100,7 +100,7 @@ def GetInfoBySeq(catchlike,catchMention):
                     if(find==False):
                         noteinfoSWeb=xhs_client.get_note_by_id(noteID,noteSec)
                         InsertNoteInfoTocache(noteID,noteSec,noteinfoSWeb["user"]["user_id"],noteinfoSWeb["user"]["nickname"],noteinfoSWeb["title"],noteinfoSWeb["desc"],datetime.datetime.fromtimestamp(noteinfoSWeb['time']/1000).strftime("%Y-%m-%d %H:%M:%S"),
-                                              int(noteinfoSWeb["interact_info"]["liked_count"]),int(noteinfoSWeb["interact_info"]["collected_count"]),int(noteinfoSWeb["interact_info"]["comment_count"]),int(noteinfoSWeb["interact_info"]["share_count"]),noteInfo['item_info']['image'])
+                                              (noteinfoSWeb["interact_info"]["liked_count"]),(noteinfoSWeb["interact_info"]["collected_count"]),(noteinfoSWeb["interact_info"]["comment_count"]),(noteinfoSWeb["interact_info"]["share_count"]),noteInfo['item_info']['image'])
                         noteinfoTitle=noteinfoSWeb["title"]
                         cursorsql.execute(select_sql)
                         # 获取所有查询结果
@@ -140,8 +140,8 @@ def GetInfoBySeq(catchlike,catchMention):
             if(incurrectDay==False):continue
             if( noteInfo['type'] in handleType and 'target_comment' not in noteInfo['comment_info']  and remove_brackets_content(noteInfo['comment_info']["content"])!="" ):
                 noteID=noteInfo['item_info']['id'] if 'id' in noteInfo['item_info'] else ""
-                if( noteID not in  noteToCal ):
-                    continue
+                # if( noteID not in  noteToCal ):
+                #     continue
               
                 noteSec=noteInfo['item_info']['xsec_token'] if 'xsec_token' in noteInfo['item_info'] else ""
                 find=False
@@ -243,12 +243,18 @@ def InsertNoteHandleTocache( datas):
             notehandletime=datetime.datetime.strptime(data["操作时间"], "%Y-%m-%d %H:%M:%S")
 #-----------------------------------------------------------------------------处理新发的当天只收50赞50藏----------------------------------------------
             currentHandleDate=notehandletime.date()
-            key=data["篇"]+data["操作类型"]
-            if( key in countDT):
-                countDT[key]+=1
-            else:
-                countDT[key]=1            
-            if(countDT[key]>52 and currentHandleDate in endtimes and  datetime.datetime.strptime([datac for datac in NodeTexts if datac[1]==data["篇"] ][0][7], "%Y-%m-%d %H:%M:%S").date()==currentHandleDate):
+            noteid=[id for id in NodeTexts if id[1]==data["篇"]][0]
+            key=noteid#data["篇"]+data["操作类型"]
+            if( key not in countDT): 
+                countDT[key]=[0,0,0] 
+            if(data["操作类型"]=="赞"):
+                countDT[key][0]+=1
+            elif(data["操作类型"]=="收藏"):
+                countDT[key][1]+=1
+            elif(data["操作类型"]=="评论"):
+                countDT[key][2]+=1   
+            datanode=[datac for datac in NodeTexts if datac[1]==data["篇"] ][0]        
+            if((countDT[key][0]>52 or countDT[key][1]>52) and currentHandleDate in endtimes and  datetime.datetime.strptime(datanode[7], "%Y-%m-%d %H:%M:%S").date()==currentHandleDate):
                 status=0            
 #-------------------------------------------------------------------------------处理重复操作了的数据--------------------------------------------------
             if(len([dataC for dataC in toinsert  if dataC[0]==data["篇"] and dataC[1]==data["操作人ID"] and dataC[4]==data["操作类型"]])>0):
@@ -277,19 +283,21 @@ def InsertNoteHandleTocache( datas):
                     except Exception as ex:
                         print(ex)
                         traceback.print_exc()                        
-#------------------------------------------------------------------------打印出来不合要求的数据---------------------------------------------------
                 if(status==0):    
                     print(f'******{data["操作人昵称"]} 对篇{data["篇"]} 操作 {data["操作类型"]} 不和要求')
                     break
+#-----------------------------------------------------------------------------处理没有在要处理的篇列表中的数据--------------------------------------
+            if( data["篇"] not in  noteToCal ):
+                status=0
             findold=[da for da in dataNodeDZ1 if (da[1]==data["篇"] and da[2]==data["操作人ID"] and da[5]==data["操作类型"] )]
             if (len(findold)>0):
-                print(f'******{data["操作人昵称"]} 对篇{data["篇"]} 的{data["操作类型"]} 与过往重复，时间:{data["操作时间"]} ,{findold[0][6]}')
+                print(f'******你的账号 {data["操作人昵称"]} 对篇{datanode[5]} 的{data["操作类型"]} 与过往重复，时间:{data["操作时间"]} ,{findold[0][6]}')
                 status=0
             toinsert.append((data["篇"] , data["操作人ID"] ,data["操作人昵称"] ,data["操作人头像"],data["操作类型"],data["操作时间"],data["评论内容"],status,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
         # 插入单条数据
         cursorsql.executemany(insert_single_sql, toinsert)
         for key in countDT:
-            print(f"{key} 有{countDT[key]}个")
+            print(f"{key[0]}  {key[5]} 有{countDT[key]}个")
     if(InEncry):
         InsertNoteHandleTocacheEncry(datas)
     # # 定义插入多条数据的 SQL 语句

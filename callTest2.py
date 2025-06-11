@@ -106,9 +106,9 @@ def InsertMarkID(name,odata,MarkID):
                 break
         if(id==-1):
             print(f"**增加了新用户{name}，他MarkID是{MarkID+1}")
-            insert_single_sql = '''INSERT INTO MarkWX (wxName ,MarkID ,PayCode,OriginName,AddTime)
-            VALUES (?, ?,?,?,?)'''  
-            cursorsql.execute(insert_single_sql, (name,MarkID+1,0,name,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
+            insert_single_sql = '''INSERT INTO MarkWX (ID,wxName ,MarkID ,PayCode,OriginName,AddTime)
+            VALUES (?,?, ?,?,?,?)'''  
+            cursorsql.execute(insert_single_sql, (MarkID+1,name,MarkID+1,0,name,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
             # 提交事务，将更改保存到数据库
             conn.commit() 
             return  MarkID+1
@@ -519,15 +519,18 @@ def loadMoreCleaver(AreaText):
     tempMsg=[] 
     needSetStartText= True if StartText==None else False
     needSetBreakText= True if breakText==None else False
+    fastbreak=None#上一个上划中最小的时间，用于快速加载找到起始时间
     while(True) :
+        print(f"开始找起始时间{fastbreak}")
         tempMsg=wx.GetAllMessage(
                 savepic   = False,   # 保存图片
                 savefile  = False,   # 保存文件
                 savevoice = False,    # 保存语音转文字内容
                 saveVideo=False,
                 saveZF=False,
-                AreaText=(AreaText[0],None)
+                AreaText=(AreaText[0],fastbreak)
             ) 
+        print("开始找起始时间加载结束")
         canbreak=False 
         for msg in tempMsg:
             if msg.type == 'time'  :
@@ -536,8 +539,9 @@ def loadMoreCleaver(AreaText):
                 else:
                     if(needSetStartText):
                         StartText=msg.content
+                        fastbreak=StartText
                     break
-        if (canbreak==True):
+        if (needSetBreakText==True):
             for msg in reversed(tempMsg):
                 if msg.type == 'time'  :
                     if bText!= parse_wechat_time(msg.content).date():
@@ -545,12 +549,18 @@ def loadMoreCleaver(AreaText):
                             breakText=msg.content
                         continue
                     else:
+                        needSetBreakText=False
+                        print(f"*********找到结束时间了{breakText}")
                         break
+        if(canbreak==True):
+            print(f"*******找到起始时间了{StartText}") 
             break
         elif(wx.LoadMoreMessage()):
             print("向上滚动")   
         else:
-            print("加载信息结束") 
+            print("加载信息失败，可能没有更多信息了")
+            if(needSetStartText):
+                StartText=None 
             break
     tempMsg=wx.GetAllMessage(
             savepic   = False,   # 保存图片
@@ -558,7 +568,7 @@ def loadMoreCleaver(AreaText):
             savevoice = False,    # 保存语音转文字内容
             saveVideo=False,
             saveZF=True,
-            AreaText=AreaText
+            AreaText=(StartText,breakText)
         ) 
     return tempMsg 
 def InsertPayDetail(toinsertInfo):
@@ -755,7 +765,7 @@ if __name__ == '__main__':
         #还是没有找到则插入新微信名到MarkWX表
         MarkID=dataNode2[-1][0]  #最后一个微信号的ID
         insertedMarkID=[]
-        for info in infosToSave:
+        for info in infosToSave:#bug 有多个要插入的时候，最后一个ID为0了，要修复
             if(info["MarkID"]!=0 or info["wxID"] in insertedMarkID):
                 continue
             MarkID=InsertMarkID(info["wxID"],dataNode2,MarkID)
@@ -955,9 +965,34 @@ if __name__ == '__main__':
             if(txml[3]==0):
                 payDetailRemark="无支付码"
             toinsertPayDetail.append([txml[0],txml[1],txml[7],txml[8],txml[4],txml[5],txml[6],txml[9],txml[10],payDetailRemark,"支付情况",f'{min(DZDay).strftime("%d")}-{max(DZDay).strftime("%d")}', datetime.datetime.today()])
+#--------------------------------------------------------------------------看每一篇做了多少数据-------------------------------        
+        ReceiveZC2= [value for d in ReceiveZC for value in ReceiveZC[d]]
+        ReceiveZC2grouped = {}
+        for rzc in ReceiveZC2:
+            if(rzc[1] not in ReceiveZC2grouped):
+                select_sql = "SELECT id,note_id,nickname,title,desc,time,likecount,collectedcount,commentcount,sharecount,image,xsec_token,user_id FROM NodeTextInfo WHERE note_id = ?" 
+                cursorsql.execute(select_sql, (rzc[1],))
+                # 获取所有查询结果
+                dataNodeDZ1 = cursorsql.fetchall() 
+                ReceiveZC2grouped[rzc[1]]=[]
+                ReceiveZC2grouped[rzc[1]].extend([dataNodeDZ1,0,0,0])
+            
+            if(rzc[5]=="赞"):
+                ReceiveZC2grouped[rzc[1]][1]+=1
+            elif(rzc[5]=="收藏"):
+                ReceiveZC2grouped[rzc[1]][2]+=1
+            elif(rzc[5]=="评论"):
+                ReceiveZC2grouped[rzc[1]][3]+=1
+        for rzc in ReceiveZC2grouped:
+            msgad=f"{(ReceiveZC2grouped[rzc][0][0][3]).ljust(40)}({ReceiveZC2grouped[rzc][1]}赞{ReceiveZC2grouped[rzc][2]}藏{ReceiveZC2grouped[rzc][3]}评)"
+            print(msgad) 
+            NotReceiveZC.append((msgad,"",f" ",f" ",f"" ,""))
+#-------------------------------------------------------------------------------对没有收到的赞藏评进行统计----------------------------------------------------------        
+        
         NotReceiveZC.append((f"微信赞{str(CountSummary['z'])}",f"微信藏{str(CountSummary['c'])}",f"微信评{str(CountSummary['p'])}",f"小红书赞{str(len(ZListConfirm))}藏{str(len(CListConfirm))}评{str(len(OtherListConfirm))}"
                              ,f"自然流量赞:{str(len(ZListConfirm)-(CountSummary['z']-CountSummary['Nz']))}藏:{str(len(CListConfirm)-(CountSummary['c']-CountSummary['Nc']))}评:{str(len(OtherListConfirm)-(CountSummary['p']-CountSummary['Np']))}"
                              ,""))
+        
         for nrzc in NotReceiveZC:
             toinsertPayDetail.append([nrzc[1],nrzc[0],0,0,"",0,nrzc[3],nrzc[2],nrzc[5],nrzc[4],"无赞藏",f'{min(DZDay).strftime("%d")}-{max(DZDay).strftime("%d")}', datetime.datetime.today()])
 #-------------------------------------------------------------------------------将excel数据插入数据库----------------------------------------------------------
