@@ -14,10 +14,10 @@ class WeChatDonation:
         """初始化赞赏助手，加载Excel数据"""
         self.excel_path = excel_path
         self.password = password  # 支付密码，如需要
-        self.data = self.load_excel()
-        self.d = None  # uiautomator2设备对象
         self.shtPayDetail = None  # 支付详情工作表
         self.wb=None
+        self.data = self.load_excel()
+        self.d = None  # uiautomator2设备对象
     def load_excel(self):
         """从Excel读取赞赏码和金额数据"""
         try:
@@ -30,8 +30,13 @@ class WeChatDonation:
             if row_values not in required_columns or row_values2 not in required_columns:
                 raise ValueError(f"Excel中缺少必要列")
             self.wb=wb
-            self.shtPayDetail =wb.sheets.add(name='支付详情')
-            self.shtPayDetail.range(f'A{1}').value = list("微信名", "备注号", "按小红书查到的金额","支付微信号","支付金额")
+            for sheet in wb.sheets:
+               if(sheet.name=="支付详情"):
+                   self.shtPayDetail =sheet
+                   break
+            if   self.shtPayDetail==None:
+                self.shtPayDetail =wb.sheets.add(name='支付详情')
+            self.shtPayDetail.range(f'A{1}').value = list(("微信名", "备注号", "按小红书查到的金额","支付微信号","支付金额"))
             return sheet.range('A2').expand().value
         except Exception as e:
             logger.error(f"读取Excel失败: {str(e)}")
@@ -119,6 +124,9 @@ class WeChatDonation:
     def confirm_payment(self,row):
         """确认支付"""#识别并支付 
         try:
+            if   self.d(text="继续支付").exists(timeout=10):
+                self.d(text="继续支付").click()
+                time.sleep(1)
             if   self.d(text="我知道了").exists(timeout=4):
                 self.d(text="我知道了").click()
                 time.sleep(1)
@@ -134,7 +142,7 @@ class WeChatDonation:
             for i, textview in enumerate(textviews) :
                 if("付款给" in textview.text): 
                     logger.warning(f'处理{textview.text}的支付{textviews[i+1].text}元') 
-                    myhandlevalue=list(int(row[0]),row[1],row[4],textview.text,textviews[i+1].text)
+                    myhandlevalue=list((row[0],int(row[1]),row[4],textview.text,textviews[i+1].text))
                     self.shtPayDetail.range(f'A{i+2}').value = textview.text
                     break
             if self.password:
@@ -148,7 +156,7 @@ class WeChatDonation:
                 time.sleep(10)  # 给用户10秒时间输入密码
             
             # 检查是否支付成功
-            if self.d(text="支付成功").exists:
+            if self.d(text="支付成功").exists(timeout=10):
                 logger.info("支付成功!")
                 
                 self.d(text="完成").click()
