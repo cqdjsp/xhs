@@ -118,7 +118,7 @@ def GetInfoBySeq(catchlike,catchMention):
         cursor=note['strCursor']  
         if(note["has_more"]==False):break  
         print(f"赞藏：catchlike{catchlike} cursor:{cursor}")
-        sleep(random.uniform(0.2, 1.0))
+        sleep(random.uniform(0.1, 0.5))
     cursor=""
     while(catchMention>0):
         mentionNote=  xhs_client.get_mention_notifications(20,cursor)

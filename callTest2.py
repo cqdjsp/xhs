@@ -771,6 +771,7 @@ if __name__ == '__main__':
             MarkID=InsertMarkID(info["wxID"],dataNode2,MarkID)
             if MarkID !=None:
                 info["MarkID"]=MarkID 
+                info ["PayCode"]=MarkID 
                 insertedMarkID.append(info["wxID"])
 #---------------------------获取真实点赞的数据---------------------------
         select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime FROM NodeHandleInfo" 
