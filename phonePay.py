@@ -209,21 +209,6 @@ class WeChatDonation:
             logger.error(f"确认支付失败: {str(e)}")
             return (False,None)
     
-    def back_to_main(self):
-        """返回主界面"""
-        try:
-            # 连续按返回键直到回到主界面
-            for _ in range(5):
-                self.d.press("back")
-                time.sleep(1)
-                if self.d(resourceId="com.tencent.mm:id/ky9").exists:
-                    break
-            
-            return True
-        except Exception as e:
-            logger.error(f"返回主界面失败: {str(e)}")
-            return False
-    
     def process_payments(self):
         """处理所有支付"""
         if not self.connect_device():
@@ -234,7 +219,7 @@ class WeChatDonation:
         
         success_count = 0
         total_count = len(self.data)
-        startindex=92
+        startindex=24
         for index, row in enumerate(self.data):
             if index < startindex:
                 continue
@@ -271,7 +256,7 @@ def upload_image(d, local_path, device_path):
         logger.error(f"上传图片失败: {str(e)}")
 if __name__ == "__main__":
     # Excel文件路径，确保文件存在且格式正确
-    excel_path = "E:/my/job/xhs/Result/结算(11-11)2025_06_12_09_22_28.xls"  
+    excel_path = "E:/my/job/xhs/Result/结算(12-12)2025_06_13_09_19_18.xls"  
     d = u2.connect() # 连接多台设备需要指定设备序列号
     # 授予存储权限
     d.shell("pm grant com.github.uiautomator android.permission.WRITE_EXTERNAL_STORAGE")

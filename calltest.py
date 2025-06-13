@@ -291,7 +291,7 @@ def InsertNoteHandleTocache( datas):
                 status=0
             findold=[da for da in dataNodeDZ1 if (da[1]==data["篇"] and da[2]==data["操作人ID"] and da[5]==data["操作类型"] )]
             if (len(findold)>0):
-                print(f'******你的账号 {data["操作人昵称"]} 对篇{datanode[5]} 的{data["操作类型"]} 与过往重复，时间:{data["操作时间"]} ,{findold[0][6]}')
+                print(f'******你的账号 {data["操作人昵称"]} 对笔记《 {datanode[5]} 》的 {data["操作类型"]} 与过往重复，时间:{data["操作时间"]} ,{findold[0][6]}')
                 status=0
             toinsert.append((data["篇"] , data["操作人ID"] ,data["操作人昵称"] ,data["操作人头像"],data["操作类型"],data["操作时间"],data["评论内容"],status,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
         # 插入单条数据
