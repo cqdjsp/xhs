@@ -10,8 +10,34 @@ import os
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+class WechatVersion:
+    def __init__(self, version):
+        """初始化微信版本检查"""
+        self.version = version
+        if(version=="8.0.42"):
+            self.Plus="com.tencent.mm:id/ky9"#加号按钮 
+            self.Picture="com.tencent.mm:id/hnn"#相册按钮
+            self.SelectPicture="com.tencent.mm:id/je0"#选择图片按钮
+            self.AmountInput="com.tencent.mm:id/pbn"#金额输入框
+            self.OtherAmount="com.tencent.mm:id/lgk"#其他金额按钮
+            self. ConfirmAmount="com.tencent.mm:id/lfv"#赞赏码确认金额按钮
+            self.PayButton="com.tencent.mm:id/hql"#支付码确认金额按钮付款按钮
+            self.ZSperson="com.tencent.mm:id/lfq"#赞赏人姓名
+            self.PayPassword="com.tencent.mm:id/tenpay_keyboard_"# # 支付密码键盘 
+            self.PaySuccess="com.tencent.mm:id/jla"#不开通指纹支付按钮
+        elif(version=="8.0.54"):
+            self.Plus="com.tencent.mm:id/plus_icon"#加号按钮 
+            self.Picture="com.tencent.mm:id/hnn"#相册按钮
+            self.SelectPicture="com.tencent.mm:id/je0"#选择图片按钮
+            self.AmountInput="com.tencent.mm:id/pbn"#金额输入框
+            self.OtherAmount="com.tencent.mm:id/lgk"#其他金额按钮
+            self. ConfirmAmount="com.tencent.mm:id/lfv"#赞赏码确认金额按钮
+            self.PayButton="com.tencent.mm:id/keyboard_action"#支付码确认金额按钮付款按钮
+            self.ZSperson="com.tencent.mm:id/lfq"#赞赏人姓名
+            self.PayPassword="com.tencent.mm:id/tenpay_keyboard_"# # 支付密码键盘 
+            self.PaySuccess="com.tencent.mm:id/jla"#不开通指纹支付按钮
 class WeChatDonation:
-    def __init__(self, excel_path, password=None):
+    def __init__(self, excel_path, password=None,startindex=0,versionWC=WechatVersion("8.0.42")):
         """初始化赞赏助手，加载Excel数据"""
         self.excel_path = excel_path
         self.password = password  # 支付密码，如需要
@@ -19,6 +45,8 @@ class WeChatDonation:
         self.wb=None
         self.data = self.load_excel()
         self.d = None  # uiautomator2设备对象
+        self.startindex=startindex
+        self.OBJWC=versionWC
     def load_excel(self):
         """从Excel读取赞赏码和金额数据"""
         try:
@@ -26,7 +54,7 @@ class WeChatDonation:
             sheet=wb.sheets["Sheet1"]  # 假设数据在第一个工作表
             # 确保列名包含"赞赏码"和"金额"
             row_values = sheet.range('B1').value
-            row_values2 = sheet.range('E1').value
+            row_values2 = sheet.range('D1').value
             required_columns = ["备注号", "按小红书查到的计算"] 
             if row_values not in required_columns or row_values2 not in required_columns:
                 raise ValueError(f"Excel中缺少必要列")
@@ -69,13 +97,13 @@ class WeChatDonation:
         """打开微信扫一扫"""
         try:
             # 点击加号按钮
-            self.d(resourceId="com.tencent.mm:id/ky9").click()
-            time.sleep(2)
-            
+            if not self.d(resourceId=self.OBJWC.Plus).exists(timeout=2):
+                return False
+            self.d(resourceId=self.OBJWC.Plus).click()
+            time.sleep(0.5)  # 等待菜单弹出
+            if self.d(text="扫一扫").exists(timeout=2):
             # 点击扫一扫
-            self.d(text="扫一扫").click()
-            time.sleep(3)  # 等待扫描界面加载
-            
+                self.d(text="扫一扫").click()
             return True
         except Exception as e:
             logger.error(f"打开扫一扫失败: {str(e)}")
@@ -89,48 +117,56 @@ class WeChatDonation:
             #qrcode_path=f"config/zfcode/1.jpg"
             upload_image(self.d,qrcode_path, "/sdcard/Pictures/WeiXin/1.jpg")
             # 点击相册按钮
-            self.d(resourceId="com.tencent.mm:id/hnn").click()
-            time.sleep(2)  # 等待相册加载
-            self.d(resourceId="com.tencent.mm:id/je0").click() 
+            time.sleep(random.uniform(0.3, 0.6))
+            if(self.d(resourceId=self.OBJWC.Picture).exists(timeout=2)):
+                self.d(resourceId=self.OBJWC.Picture).click()
+            time.sleep(random.uniform(0.3, 0.6))
+            if(self.d(resourceId=self.OBJWC.SelectPicture).exists(timeout=2)):
+                time.sleep(random.uniform(1.5, 2))
+                self.d(resourceId=self.OBJWC.SelectPicture).click() 
             """输入支付金额"""
             isZan=True
             userName=None
-            if self.d(resourceId="com.tencent.mm:id/lgk").exists(timeout=2):
+            if self.d(resourceId=self.OBJWC.OtherAmount).exists(timeout=6):
                #使用的是赞赏码
-               if not self.d(resourceId="com.tencent.mm:id/lgk").exists(timeout=10):
+               if not self.d(resourceId=self.OBJWC.OtherAmount).exists(timeout=10):
                     return (False,None)
                else:
-                    self.d(resourceId="com.tencent.mm:id/lgk").click()#点击其他金额  
+                    time.sleep(random.uniform(0.3, 0.6))
+                    self.d(resourceId=self.OBJWC.OtherAmount).click()#点击其他金额  
                     # 等待金额输入框出现
-                    if not self.d(resourceId="com.tencent.mm:id/pbn").exists(timeout=5):
+                    if not self.d(resourceId=self.OBJWC.AmountInput).exists(timeout=5):
                         logger.error("未找到金额输入框")
                         return (False,None)
                     logger.info("扫描赞赏码成功")
-                    userName=self.d(resourceId="com.tencent.mm:id/lfq").get_text()  # 获取赞赏人姓名
+                    userName=self.d(resourceId=self.OBJWC.ZSperson).get_text()  # 获取赞赏人姓名
                     # 输入金额
-                    self.d(resourceId="com.tencent.mm:id/pbn").set_text(str(amount))
-                    time.sleep(1)
+                    self.d(resourceId=self.OBJWC.AmountInput).set_text(str(amount))
+                    if not self.d(resourceId=self.OBJWC. ConfirmAmount).exists(timeout=2):
+                        d.swipe_ext("up", scale=0.5)
+                    time.sleep(random.uniform(0.3, 0.5))
                     logger.info("输入金额成功")    
-                    # 点击"确定"按钮
-                    self.d(resourceId="com.tencent.mm:id/lfv").click()
-                    time.sleep(1)
+                    if not self.d(resourceId=self.OBJWC. ConfirmAmount).exists(timeout=1):
+                        logger.error("未找到确认金额按钮")
+                        return (False,None)                       
+                    self.d(resourceId=self.OBJWC. ConfirmAmount).click() 
                     logger.info("点击赞赏成功") 
             else:#支付码
                 isZan=False
                 try:
                     # 等待金额输入框出现
-                    if not self.d(resourceId="com.tencent.mm:id/pbn").exists(timeout=5):
+                    if not self.d(resourceId=self.OBJWC.AmountInput).exists(timeout=5):
                         logger.error("未找到金额输入框")
                         return (False,None)
                     logger.info("扫描支付码成功")
                     
                     # 输入金额
-                    self.d(resourceId="com.tencent.mm:id/pbn").set_text(str(amount))
-                    time.sleep(1)
+                    self.d(resourceId=self.OBJWC.AmountInput).set_text(str(amount))
+                    time.sleep(random.uniform(0.3, 0.5))
                     logger.info("输入金额成功")
                     # 点击"确定"按钮
-                    self.d(resourceId="com.tencent.mm:id/hql").click()
-                    time.sleep(1)
+                    self.d(resourceId=self.OBJWC.PayButton).click()
+                    time.sleep(random.uniform(0.3, 0.5))
                     logger.info("点击付款成功")
                      
                 except Exception as e:
@@ -149,17 +185,16 @@ class WeChatDonation:
             # 等待支付确认界面 
             myhandlevalue=None
             if(isZan):
-                if not self.d(text="请输入支付密码").exists(timeout=10):
-                    logger.error("未找到支付密码输入框")
-                    return (False,None)
+                if not self.d(text="请输入支付密码").exists(timeout=3):
+                    logger.error("未找到请输入支付密码提示") 
                 logger.info(f"正在处理赞赏给{userName}的赞赏{amount}元")
                 myhandlevalue=list((row[0],int(row[1]),row[4],userName,str(amount)))
             else:
                 if   self.d(text="识别并支付").exists(timeout=2):
                     self.d(text="识别并支付").click()
-                if not self.d(text="请输入支付密码").exists(timeout=10):
-                    logger.error("未找到支付密码输入框")
-                    return (False,None)    
+                if not self.d(text="请输入支付密码").exists(timeout=3):
+                    logger.error("未找到请输入支付密码提示")
+                      
                 logger.info(f"正在处理支付给{row[0]}的支付{amount}元")
                 textviews = d.xpath('//android.widget.TextView').all()
                 for i, textview in enumerate(textviews) :
@@ -175,10 +210,10 @@ class WeChatDonation:
                 while(i<len(self.password)) :  
                     
                     digit  = self.password[i]
-                    self.d(resourceId=f"com.tencent.mm:id/tenpay_keyboard_{digit}").click()
+                    self.d(resourceId=f"{self.OBJWC.PayPassword}{digit}").click()
                     i += 1
                     time.sleep(random.uniform(0.3, 0.5)) 
-                    if(self.d(resourceId="com.tencent.mm:id/pbn").exists(0.3) and len(self.d(resourceId="com.tencent.mm:id/pbn").get_text())!=i):
+                    if(self.d(resourceId=self.OBJWC.AmountInput).exists(0.3) and len(self.d(resourceId=self.OBJWC.AmountInput).get_text())!=i):
                         logger.warning(f"{digit}输入失败")
                         i -= 1  
                         trycount+=1
@@ -188,13 +223,12 @@ class WeChatDonation:
                     if trycount >= 3:   
                         logger.error("输入支付密码失败")
                         break
-                    time.sleep(random.uniform(0.1, 0.2))
             else:
                 # 等待用户手动输入密码
                 logger.info("请手动输入支付密码...")
                 time.sleep(10)  # 给用户10秒时间输入密码
-            if self.d(resourceId="com.tencent.mm:id/jla").exists(timeout=2):
-                self.d(resourceId="com.tencent.mm:id/jla").click()  # 稍后再说   不开指纹支付
+            if self.d(resourceId=self.OBJWC.PaySuccess).exists(timeout=2):
+                self.d(resourceId=self.OBJWC.PaySuccess).click()  # 稍后再说   不开指纹支付
             # 检查是否支付成功
             if self.d(text="支付成功").exists(timeout=5):
                 logger.info("支付成功!")
@@ -219,7 +253,7 @@ class WeChatDonation:
         
         success_count = 0
         total_count = len(self.data)
-        startindex=24
+        startindex=self.startindex
         for index, row in enumerate(self.data):
             if index < startindex:
                 continue
@@ -238,7 +272,7 @@ class WeChatDonation:
             else:
                 self.shtPayDetail.range(f'A{index+2}').value=list((wxname,qrcode,amount))
             # 每笔支付后稍作休息，避免操作过快
-            time.sleep(2)
+            time.sleep(random.uniform(0.3, 1))
         self.wb.save()
         self.wb.close()
         logger.info(f"支付任务完成! 总共 {total_count} 笔，成功 {success_count} 笔")
@@ -256,7 +290,9 @@ def upload_image(d, local_path, device_path):
         logger.error(f"上传图片失败: {str(e)}")
 if __name__ == "__main__":
     # Excel文件路径，确保文件存在且格式正确
-    excel_path = "E:/my/job/xhs/Result/结算(12-12)2025_06_13_09_19_18.xls"  
+    excel_path = "E:/my/job/xhs/Result/78.xls"  
+    startindex=1#excel表格的行号-2
+    versionWC=WechatVersion("8.0.54") #微信版本号
     d = u2.connect() # 连接多台设备需要指定设备序列号
     # 授予存储权限
     d.shell("pm grant com.github.uiautomator android.permission.WRITE_EXTERNAL_STORAGE")
@@ -264,7 +300,7 @@ if __name__ == "__main__":
  
     print(d.info)
     # 创建支付助手实例
-    donation = WeChatDonation(excel_path, password="705464")  # 替换为实际支付密码或留空
+    donation = WeChatDonation(excel_path, password="705464",startindex=startindex,versionWC=versionWC)  # 替换为实际支付密码或留空
     try:
     # 执行支付
         donation.process_payments()

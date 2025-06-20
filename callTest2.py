@@ -227,7 +227,7 @@ def InsertXML(infos):
     global sht,wb ,sht1,DZDay
     wxdata=[{}]#[{"wx":"wx用户名"，"xhs":"xhs用户名","z":"1","C":"1","P":"0","sp":"视频证明地址"}]
     # 将a1,a2,a3输入第一列，b1,b2,b3输入第二列
-    header=['微信用户名','备注号' ,"按用户发的计算","支付码图","按小红书查到的计算","按用户发的然后从小红书查找计算","按小红书查到的计算==按用户发的然后从小红书查找计算","金额计算过程","操作账号个数","实际操作数","小红书账号","信息内容"] 
+    header=['微信用户名','备注号' ,"按用户发的计算","按小红书查到的计算","按用户发的然后从小红书查找计算","按小红书查到的计算==按用户发的然后从小红书查找计算","支付码图","金额计算过程","操作账号个数","实际操作数","小红书账号","信息内容"] 
     sht1.range('A1') .value=header#没有支付码的人
     # sht1.range('F:F').column_width = 15
     # sht1.range('G:G').column_width = 15
@@ -238,10 +238,10 @@ def InsertXML(infos):
     sht1.range('L:L').column_width = 40
 
     sht.range('A1') .value=header
-    # sht.range('F:F').column_width = 15
-    # sht.range('G:G').column_width = 15 
+    sht.range('A:A').column_width = 20
+    sht.range('D:D').column_width = 20 
+    sht.range('E:E').column_width = 20 
     sht.range('H:H').column_width = 40
-    sht.range('G:G').column_width = 10
     sht.range('J:J').column_width = 40
     sht.range('K:K').column_width = 15
     sht.range('L:L').column_width = 40 
@@ -251,29 +251,29 @@ def InsertXML(infos):
     paycodeMarkID=""
     for info in infos: 
         path=f'config\\zfcode\\{int(info[3])}.jpg'
-        insertList=list((info[0],info[1],info[2],info[3],info[7],info[8],None,info[4],info[5],info[6],info[9],info[10]))
+        insertList=list((info[0],info[1],info[2],info[7],info[8],None,info[3],info[4],info[5],info[6],info[9],info[10]))
         
         if(int(info[3])==0):#没有支付码的
             nopaycode+=f"@{info[0]}"
             paycodeMarkID+=f",{info[1]}"
-            sht1.range(f'E{sht1i}').api.WrapText = True
+            sht1.range(f'D{sht1i}').api.WrapText = True
             sht1.range(f'A{sht1i}') .value=insertList
-            sht1.range(f'G{sht1i}').formula = f'=E{sht1i}=F{sht1i}'
+            sht1.range(f'F{sht1i}').formula = f'=D{sht1i}=E{sht1i}'
             sht1i+=1
 
         else: 
             if(os.path.exists(path)):
-                sht.range(f'E{i}').api.WrapText = True
+                sht.range(f'D{i}').api.WrapText = True
                 sht.range(f'A{i}') .value=insertList
-                sht.range(f'G{i}').formula = f'=E{i}=F{i}'
+                sht.range(f'F{i}').formula = f'=D{i}=E{i}'
                 filePath = os.path.join(os.getcwd(),path )
-                add_center(sht, 'D'+str(i), filePath, width=350, height=350)
+                add_center(sht, 'G'+str(i), filePath, width=350, height=350)
                 i+=1  
             else:
                 print(f"{info[0]},MarkID{info[1]}在数据库有paycode但是没有文件")
-                sht1.range(f'E{sht1i}').api.WrapText = True
+                sht1.range(f'D{sht1i}').api.WrapText = True
                 sht1.range(f'A{sht1i}') .value=insertList
-                sht1.range(f'G{sht1i}').formula = f'=E{sht1i}=F{sht1i}'
+                sht1.range(f'F{sht1i}').formula = f'=D{sht1i}=E{sht1i}'
                 nopaycode+=f"@{info[0]}"
                 paycodeMarkID+=f",{info[1]}"
                 sht1i+=1
@@ -532,15 +532,17 @@ def loadMoreCleaver(AreaText):
             ) 
         print("开始找起始时间加载结束")
         canbreak=False 
+        fastbreak=None
         for msg in tempMsg:
             if msg.type == 'time'  :
-                if sText > parse_wechat_time(msg.content).date():
+                if sText > parse_wechat_time(msg.content).date() or (needSetStartText==False and StartText==msg.content):
                     canbreak=True
                 else:
+                    if(fastbreak==None):
+                        fastbreak=msg.content
                     if(needSetStartText):
                         StartText=msg.content
-                        fastbreak=StartText
-                    break
+                        break
         if (needSetBreakText==True):
             for msg in reversed(tempMsg):
                 if msg.type == 'time'  :
@@ -595,7 +597,7 @@ if __name__ == '__main__':
                     endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in timetohandle if datadate!=""]
                 
         IsZF=True#是否是从转发的窗口获取数据
-        StartText=None# "2025年5月30日 3:14"#"昨天 8:15"#"0:25"#"2025年4月25日 5:48" 如果是None会根据配置自动找到开始统计的地方
+        StartText=None#"昨天 21:15"# "2025年5月30日 3:14"#"0:25"#"2025年4月25日 5:48" 如果是None会根据配置自动找到开始统计的地方
         breakText=None#"0:12"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44 如果是None会根据配置自动找到结束统计的地方
         DZDay=endtimes#点赞收藏的哪天
         priceZ=1
@@ -700,11 +702,11 @@ if __name__ == '__main__':
                         infossaveeone["ZhengMing"]=msg.content
                     else:  
                         if(contentAfterHandle.find("@姜可艾 没有结算完")>-1):
-                            cs=1
+                            cs=1 #乘数
                             if(contentAfterHandle.find("2组赞藏")>-1 or contentAfterHandle.find("两组赞藏")>-1 or contentAfterHandle.find("两组")>-1 or contentAfterHandle.find("2组")>-1):
                                 cs=2
                             if(contentAfterHandle.find("关注")>-1):
-                                cs=0
+                                cs=1
                             if(contentAfterHandle.find("赞")>-1):
                                 infossaveeone["IsZ"]=1*cs
                             if(contentAfterHandle.find("藏")>-1):
@@ -987,12 +989,13 @@ if __name__ == '__main__':
         for rzc in ReceiveZC2grouped:
             msgad=f"{(ReceiveZC2grouped[rzc][0][0][3]).ljust(40)}({ReceiveZC2grouped[rzc][1]}赞{ReceiveZC2grouped[rzc][2]}藏{ReceiveZC2grouped[rzc][3]}评)"
             print(msgad) 
-            NotReceiveZC.append((msgad,"",f" ",f" ",f"" ,""))
+            NotReceiveZC.append(("","",f" ",f" ",f"" ,msgad))
 #-------------------------------------------------------------------------------对没有收到的赞藏评进行统计----------------------------------------------------------        
         
-        NotReceiveZC.append((f"微信赞{str(CountSummary['z'])}",f"微信藏{str(CountSummary['c'])}",f"微信评{str(CountSummary['p'])}",f"小红书赞{str(len(ZListConfirm))}藏{str(len(CListConfirm))}评{str(len(OtherListConfirm))}"
-                             ,f"自然流量赞:{str(len(ZListConfirm)-(CountSummary['z']-CountSummary['Nz']))}藏:{str(len(CListConfirm)-(CountSummary['c']-CountSummary['Nc']))}评:{str(len(OtherListConfirm)-(CountSummary['p']-CountSummary['Np']))}"
-                             ,""))
+        NotReceiveZC.append((f"",f"",f"",f""
+                             ,f""
+                             ,f"微信【{str(CountSummary['z'])}，{str(CountSummary['c'])}，{str(CountSummary['p'])}】自然流量【{str(len(ZListConfirm)-(CountSummary['z']-CountSummary['Nz']))}，{str(len(CListConfirm)-(CountSummary['c']-CountSummary['Nc']))}，{str(len(OtherListConfirm)-(CountSummary['p']-CountSummary['Np']))}】"
+                             f"总【{str(len(ZListConfirm))}，{str(len(CListConfirm))}，{str(len(OtherListConfirm))}】"))
         
         for nrzc in NotReceiveZC:
             toinsertPayDetail.append([nrzc[1],nrzc[0],0,0,"",0,nrzc[3],nrzc[2],nrzc[5],nrzc[4],"无赞藏",f'{min(DZDay).strftime("%d")}-{max(DZDay).strftime("%d")}', datetime.datetime.today()])
