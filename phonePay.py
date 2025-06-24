@@ -40,37 +40,11 @@ class WeChatDonation:
     def __init__(self, excel_path, password=None,startindex=0,versionWC=WechatVersion("8.0.42")):
         """初始化赞赏助手，加载Excel数据"""
         self.excel_path = excel_path
-        self.password = password  # 支付密码，如需要
-        self.shtPayDetail = None  # 支付详情工作表
-        self.wb=None
-        self.data = self.load_excel()
+        self.password = password  # 支付密码，如需要  
         self.d = None  # uiautomator2设备对象
         self.startindex=startindex
         self.OBJWC=versionWC
-    def load_excel(self):
-        """从Excel读取赞赏码和金额数据"""
-        try:
-            wb = xw.Book(self.excel_path)
-            sheet=wb.sheets["Sheet1"]  # 假设数据在第一个工作表
-            # 确保列名包含"赞赏码"和"金额"
-            row_values = sheet.range('B1').value
-            row_values2 = sheet.range('D1').value
-            required_columns = ["备注号", "按小红书查到的计算"] 
-            if row_values not in required_columns or row_values2 not in required_columns:
-                raise ValueError(f"Excel中缺少必要列")
-            self.wb=wb
-            for sheettemp in wb.sheets:
-               if(sheettemp.name=="支付详情"):
-                   self.shtPayDetail =sheettemp
-                   break
-            if   self.shtPayDetail==None:
-                self.shtPayDetail =wb.sheets.add(name='支付详情')
-                self.shtPayDetail.range(f'A{1}').value = list(("微信名", "备注号", "按小红书查到的金额","支付微信号","支付金额"))
-            return sheet.range('A2').expand().value
-        except Exception as e:
-            logger.error(f"读取Excel失败: {str(e)}")
-            sys.exit(1)
-    
+ 
     def connect_device(self):
         """连接Android设备"""
         try:
@@ -127,7 +101,7 @@ class WeChatDonation:
             """输入支付金额"""
             isZan=True
             userName=None
-            if self.d(resourceId=self.OBJWC.OtherAmount).exists(timeout=6):
+            if self.d(resourceId=self.OBJWC.OtherAmount).exists(timeout=3):
                #使用的是赞赏码
                if not self.d(resourceId=self.OBJWC.OtherAmount).exists(timeout=10):
                     return (False,None)
@@ -212,7 +186,7 @@ class WeChatDonation:
                     digit  = self.password[i]
                     self.d(resourceId=f"{self.OBJWC.PayPassword}{digit}").click()
                     i += 1
-                    time.sleep(random.uniform(0.3, 0.5)) 
+                    time.sleep(random.uniform(0.2, 0.4)) 
                     if(self.d(resourceId=self.OBJWC.AmountInput).exists(0.3) and len(self.d(resourceId=self.OBJWC.AmountInput).get_text())!=i):
                         logger.warning(f"{digit}输入失败")
                         i -= 1  
@@ -231,7 +205,7 @@ class WeChatDonation:
                 self.d(resourceId=self.OBJWC.PaySuccess).click()  # 稍后再说   不开指纹支付
             # 检查是否支付成功
             if self.d(text="支付成功").exists(timeout=5):
-                logger.info("支付成功!")
+                logger.info("-------------------支付成功!-----------------")
                 self.d(text="完成").click() 
             else:
                 logger.warning("未检测到支付成功提示，可能需要手动确认") 
@@ -244,39 +218,56 @@ class WeChatDonation:
             return (False,None)
     
     def process_payments(self):
-        """处理所有支付"""
-        if not self.connect_device():
-            return False
-        
-        if not self.open_wechat():
-            return False
-        
-        success_count = 0
-        total_count = len(self.data)
-        startindex=self.startindex
-        for index, row in enumerate(self.data):
-            if index < startindex:
-                continue
-            qrcode = int(row[1])#"", ""
-            amount = row[4]
-            wxname= row[0]
-            logger.info(f"开始处理 {qrcode}  {wxname}的支付，金额: {amount}")
-            if(amount>0):
-                if self.open_scanner():
-                    returnvalue=self.scan_qrcode(qrcode,amount,row) 
-                    if   returnvalue[0]: 
-                        success_count += 1
-                        self.shtPayDetail.range(f'A{index+2}').value = returnvalue[1]
-                        # 支付完成后返回主界面
-                        #self.back_to_main()
-            else:
-                self.shtPayDetail.range(f'A{index+2}').value=list((wxname,qrcode,amount))
-            # 每笔支付后稍作休息，避免操作过快
-            time.sleep(random.uniform(0.3, 1))
-        self.wb.save()
-        self.wb.close()
-        logger.info(f"支付任务完成! 总共 {total_count} 笔，成功 {success_count} 笔")
-        return success_count == total_count
+        with xw.App(visible=False,add_book=False) as app: 
+                # 用with 语句打开文件，可以确保万一出现异常情况，也能把文件关闭
+            with app.books.open(self.excel_path) as wb:
+                sheet=wb.sheets["Sheet1"]  # 假设数据在第一个工作表
+                # 确保列名包含"赞赏码"和"金额"
+                row_values = sheet.range('B1').value
+                row_values2 = sheet.range('D1').value
+                required_columns = ["备注号", "按小红书查到的计算"] 
+                if row_values not in required_columns or row_values2 not in required_columns:
+                    raise ValueError(f"Excel中缺少必要列") 
+                shtPayDetail=None
+                for sheettemp in wb.sheets:
+                    if(sheettemp.name=="支付详情"):
+                        shtPayDetail =sheettemp
+                        break
+                if  shtPayDetail==None:
+                    shtPayDetail =wb.sheets.add(name='支付详情')
+                    shtPayDetail.range(f'A{1}').value = list(("微信名", "备注号", "按小红书查到的金额","支付微信号","支付金额"))
+                exceldata= sheet.range('A2').expand().value
+                "处理所有支付"
+                if not self.connect_device():
+                    return False
+                if not self.open_wechat():
+                    return False
+                success_count = 0
+                total_count = len(exceldata)
+                startindex=self.startindex
+                for index, row in enumerate(exceldata):
+                    if index < startindex:
+                        continue
+                    qrcode = int(row[1])#"", ""
+                    amount = row[4]
+                    wxname= row[0]
+                    logger.info(f"开始处理 {index} {qrcode}  {wxname} 的支付，金额: {amount}")
+                    if(amount>0):
+                        if self.open_scanner():
+                            returnvalue=self.scan_qrcode(qrcode,amount,row) 
+                            if   returnvalue[0]: 
+                                success_count += 1
+                                shtPayDetail.range(f'A{index+2}').value = returnvalue[1]
+                                # 支付完成后返回主界面
+                                #self.back_to_main()
+                    else:
+                        shtPayDetail.range(f'A{index+2}').value=list((wxname,qrcode,amount))
+                    # 每笔支付后稍作休息，避免操作过快
+                    time.sleep(random.uniform(0.3, 1))
+                wb.save()
+                wb.close()
+                logger.info(f"支付任务完成! 总共 {total_count} 笔，成功 {success_count} 笔")
+                return success_count == total_count
 
 def upload_image(d, local_path, device_path):
     """上传图片到设备""" #识别并支付
@@ -290,9 +281,9 @@ def upload_image(d, local_path, device_path):
         logger.error(f"上传图片失败: {str(e)}")
 if __name__ == "__main__":
     # Excel文件路径，确保文件存在且格式正确
-    excel_path = "E:/my/job/xhs/Result/78.xls"  
-    startindex=1#excel表格的行号-2
-    versionWC=WechatVersion("8.0.54") #微信版本号
+    excel_path = "E:/my/job/xhs/Result/结算(23-23)2025_06_24_09_43_20.xls"  
+    startindex=75#excel表格的行号-2
+    versionWC=WechatVersion("8.0.42") #微信版本号
     d = u2.connect() # 连接多台设备需要指定设备序列号
     # 授予存储权限
     d.shell("pm grant com.github.uiautomator android.permission.WRITE_EXTERNAL_STORAGE")

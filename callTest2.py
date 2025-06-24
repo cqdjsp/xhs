@@ -561,8 +561,10 @@ def loadMoreCleaver(AreaText):
             print("向上滚动")   
         else:
             print("加载信息失败，可能没有更多信息了")
-            if(needSetStartText):
-                StartText=None 
+            return Exception("加载信息失败，可能没有更多信息了")
+            if(fastbreak!=None and fastbreak==StartText):
+                if(needSetStartText):
+                    StartText=None 
             break
     tempMsg=wx.GetAllMessage(
             savepic   = False,   # 保存图片
