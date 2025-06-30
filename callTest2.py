@@ -778,7 +778,7 @@ if __name__ == '__main__':
                 info ["PayCode"]=MarkID 
                 insertedMarkID.append(info["wxID"])
 #---------------------------获取真实点赞的数据---------------------------
-        select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime FROM NodeHandleInfo" 
+        select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime FROM NodeHandleInfo " #where noteID='6857aa580000000012033ce3' and handleType in ('收藏')
         cursorsql.execute(select_sql)
         # 获取所有查询结果
         dataNodeDZ1 = cursorsql.fetchall() 

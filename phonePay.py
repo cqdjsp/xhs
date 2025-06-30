@@ -159,7 +159,7 @@ class WeChatDonation:
             # 等待支付确认界面 
             myhandlevalue=None
             if(isZan):
-                if not self.d(text="请输入支付密码").exists(timeout=3):
+                if not self.d(text="请输入支付密码").exists(timeout=2):
                     logger.error("未找到请输入支付密码提示") 
                 logger.info(f"正在处理赞赏给{userName}的赞赏{amount}元")
                 myhandlevalue=list((row[0],int(row[1]),row[4],userName,str(amount)))
@@ -251,15 +251,19 @@ class WeChatDonation:
                     qrcode = int(row[1])#"", ""
                     amount = row[4]
                     wxname= row[0]
-                    logger.info(f"开始处理 {index} {qrcode}  {wxname} 的支付，金额: {amount}")
+                    logger.info(f"开始处理 Row:{index+2} ID:{qrcode} Name:{wxname} amount: {amount}")
                     if(amount>0):
                         if self.open_scanner():
                             returnvalue=self.scan_qrcode(qrcode,amount,row) 
-                            if   returnvalue[0]: 
+                            if  returnvalue[0]: 
                                 success_count += 1
                                 shtPayDetail.range(f'A{index+2}').value = returnvalue[1]
                                 # 支付完成后返回主界面
                                 #self.back_to_main()
+                            else:
+                                break
+                        else:
+                            break
                     else:
                         shtPayDetail.range(f'A{index+2}').value=list((wxname,qrcode,amount))
                     # 每笔支付后稍作休息，避免操作过快
@@ -281,8 +285,8 @@ def upload_image(d, local_path, device_path):
         logger.error(f"上传图片失败: {str(e)}")
 if __name__ == "__main__":
     # Excel文件路径，确保文件存在且格式正确
-    excel_path = "E:/my/job/xhs/Result/结算(23-23)2025_06_24_09_43_20.xls"  
-    startindex=75#excel表格的行号-2
+    excel_path = "E:/my/job/xhs/Result/结算(27-29)2025_06_30_09_59_58.xls"  
+    startindex=85#excel表格的行号-2
     versionWC=WechatVersion("8.0.42") #微信版本号
     d = u2.connect() # 连接多台设备需要指定设备序列号
     # 授予存储权限
@@ -296,4 +300,5 @@ if __name__ == "__main__":
     # 执行支付
         donation.process_payments()
     except Exception as e:
-        donation.wb.close()
+        logger.error(f"支付过程中发生错误: {str(e)}")
+        sys.exit(1)
