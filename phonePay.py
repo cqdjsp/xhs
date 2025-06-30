@@ -4,8 +4,10 @@ import time
 import logging
 import random
 import sys
+import re
+from datetime import datetime
 import os
-
+#现在cmd运行uiautodev，可以远程手机看元素
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -26,6 +28,17 @@ class WechatVersion:
             self.PayPassword="com.tencent.mm:id/tenpay_keyboard_"# # 支付密码键盘 
             self.PaySuccess="com.tencent.mm:id/jla"#不开通指纹支付按钮
         elif(version=="8.0.54"):
+            self.Plus="com.tencent.mm:id/plus_icon"#加号按钮 
+            self.Picture="com.tencent.mm:id/hnn"#相册按钮
+            self.SelectPicture="com.tencent.mm:id/je0"#选择图片按钮
+            self.AmountInput="com.tencent.mm:id/pbn"#金额输入框
+            self.OtherAmount="com.tencent.mm:id/lgk"#其他金额按钮
+            self. ConfirmAmount="com.tencent.mm:id/lfv"#赞赏码确认金额按钮
+            self.PayButton="com.tencent.mm:id/keyboard_action"#支付码确认金额按钮付款按钮
+            self.ZSperson="com.tencent.mm:id/lfq"#赞赏人姓名
+            self.PayPassword="com.tencent.mm:id/tenpay_keyboard_"# # 支付密码键盘 
+            self.PaySuccess="com.tencent.mm:id/jla"#不开通指纹支付按钮
+        elif(version=="8.0.60"):#这个版本没法使用元素了
             self.Plus="com.tencent.mm:id/plus_icon"#加号按钮 
             self.Picture="com.tencent.mm:id/hnn"#相册按钮
             self.SelectPicture="com.tencent.mm:id/je0"#选择图片按钮
@@ -159,7 +172,7 @@ class WeChatDonation:
             # 等待支付确认界面 
             myhandlevalue=None
             if(isZan):
-                if not self.d(text="请输入支付密码").exists(timeout=3):
+                if not self.d(text="请输入支付密码").exists(timeout=2):
                     logger.error("未找到请输入支付密码提示") 
                 logger.info(f"正在处理赞赏给{userName}的赞赏{amount}元")
                 myhandlevalue=list((row[0],int(row[1]),row[4],userName,str(amount)))
@@ -218,7 +231,7 @@ class WeChatDonation:
             return (False,None)
     
     def process_payments(self):
-        with xw.App(visible=False,add_book=False) as app: 
+        with xw.App(visible=False) as app: 
                 # 用with 语句打开文件，可以确保万一出现异常情况，也能把文件关闭
             with app.books.open(self.excel_path) as wb:
                 sheet=wb.sheets["Sheet1"]  # 假设数据在第一个工作表
@@ -251,15 +264,19 @@ class WeChatDonation:
                     qrcode = int(row[1])#"", ""
                     amount = row[4]
                     wxname= row[0]
-                    logger.info(f"开始处理 {index} {qrcode}  {wxname} 的支付，金额: {amount}")
+                    logger.info(f"开始处理 Row:{index+2} ID:{qrcode} Name:{wxname} amount: {amount}")
                     if(amount>0):
                         if self.open_scanner():
                             returnvalue=self.scan_qrcode(qrcode,amount,row) 
-                            if   returnvalue[0]: 
+                            if  returnvalue[0]: 
                                 success_count += 1
                                 shtPayDetail.range(f'A{index+2}').value = returnvalue[1]
                                 # 支付完成后返回主界面
                                 #self.back_to_main()
+                            else:
+                                break
+                        else:
+                            break
                     else:
                         shtPayDetail.range(f'A{index+2}').value=list((wxname,qrcode,amount))
                     # 每笔支付后稍作休息，避免操作过快
@@ -279,10 +296,49 @@ def upload_image(d, local_path, device_path):
         logger.info(f"图片已上传并设置权限: {device_path}")
     except Exception as e:
         logger.error(f"上传图片失败: {str(e)}")
+def extract_and_convert_time(input_str):
+    # 使用正则表达式提取日期时间部分（匹配类似2025_10_16_09_17_09的格式）
+    match = re.search(r'(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2})', input_str)
+    
+    if not match:
+        raise ValueError("未在字符串中找到有效的时间格式")
+    
+    # 解析匹配到的时间部分
+    year, month, day, hour, minute, second = map(int, match.groups())
+    
+    # 转换为datetime对象
+    dt = datetime(year, month, day, hour, minute, second)
+    
+    # 格式化为目标格式（年.月.日 时:分:秒）
+    return dt
+def get_all_filenames(directory):
+    # 检查目录是否存在
+    if not os.path.exists(directory):
+        raise FileNotFoundError(f"目录不存在: {directory}")
+    
+    if not os.path.isdir(directory):
+        raise NotADirectoryError(f"{directory} 不是一个目录")
+    
+    # 获取目录下的所有文件和子目录
+    all_entries = os.listdir(directory)
+    
+    # 筛选出文件（排除目录） 
+    lastestPath=None
+    lastest_time=datetime(2001, 1, 1,1,1,1)
+    for entry in all_entries:
+        entry_path = os.path.join(directory, entry)
+        if os.path.isfile(entry_path):
+            filenameTime=extract_and_convert_time(entry)
+            if(filenameTime>lastest_time):#只处理未来的文件
+                lastest_time=filenameTime
+                lastestPath=entry_path   
+    return lastestPath
 if __name__ == "__main__":
+
+
     # Excel文件路径，确保文件存在且格式正确
-    excel_path = "E:/my/job/xhs/Result/结算(23-23)2025_06_24_09_43_20.xls"  
-    startindex=75#excel表格的行号-2
+    excel_path = get_all_filenames("E:/my/job/xhs/Result" ) 
+    startindex=0#excel表格的行号-2
     versionWC=WechatVersion("8.0.42") #微信版本号
     d = u2.connect() # 连接多台设备需要指定设备序列号
     # 授予存储权限
@@ -296,4 +352,5 @@ if __name__ == "__main__":
     # 执行支付
         donation.process_payments()
     except Exception as e:
-        donation.wb.close()
+        logger.error(f"支付过程中发生错误: {str(e)}")
+        sys.exit(1)

@@ -149,14 +149,25 @@ if __name__ == '__main__':
         infosToSave=[]
         canload=True
         while(canload):
+            alreadyAddCount=0
             msgitems2=ds2.GetChildren()
             for MsgItem2 in msgitems2:
+                isalreadyAdd=False
                 if MsgItem2.ControlTypeName == 'ListItemControl' :
                         if(MsgItem2.Name!="" and "[图片]" not in MsgItem2.Name):
                             textbox1=MsgItem2.TextControl(searchDepth=10,foundIndex=1)
                             textbox2=MsgItem2.TextControl(searchDepth=10,foundIndex=2)
                             textbox3=MsgItem2.TextControl(searchDepth=10,foundIndex=3)
-                            msgs.append({"type":"text","sender":textbox1.Name,"content":textbox3.Name,"time":textbox2.Name,"msg":MsgItem2.Name})
+                             #检查是不是本次获取的数据都已经加入，如果是，说明滚动到底了
+                            for msg in msgs:
+                                if(msg["msg"]==MsgItem2.Name):
+                                    alreadyAddCount+=1
+                                    isalreadyAdd=True
+                                    break
+                            if(isalreadyAdd==False):
+                                msgs.append({"type":"text","sender":textbox1.Name,"content":textbox3.Name,"time":textbox2.Name,"msg":MsgItem2.Name})
+            if(alreadyAddCount==len(msgitems2)):
+                break               
             canload= LoadMoreMessage(ds2)
             time.sleep(1) 
         # 输出消息内容

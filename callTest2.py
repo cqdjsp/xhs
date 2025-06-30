@@ -15,6 +15,8 @@ from PIL import Image
 import time
 import csv
 import re
+import ctypes
+import threading
 class DHMsg:
     def __init__(self, type, myType,sender,content,time,fromw):
         self.type = type
@@ -352,12 +354,16 @@ def LoadFromZFMulty():
             findin[0].content+= msg.content
         
     return msgs
+def checkwindowExist(window):
+    return window.Exists(8,3)
 def check_window_exists(class_name,findindex=1):
     try:
         # 尝试查找具有指定 ClassName 的 WindowControl
         window = uia.WindowControl(ClassName=class_name, searchDepth=1,foundIndex=findindex)
+ 
         # 如果找到了控件，确保它是有效的（没有被销毁）
-        if window.Exists():
+        findresult=call_with_timeout(checkwindowExist, args=(window,), timeout=5)
+        if findresult:
             return True
     except Exception as e:
         print(f"查找控件时出现错误: {e}")
@@ -581,7 +587,29 @@ def InsertPayDetail(toinsertInfo):
      VALUES (?, ?,?,?,?, ?,?,?,?, ?,?,?,?)'''      
     cursorsql.executemany(insert_single_sql, toinsertInfo)
     conn.commit()
-             
+class TimeoutException(Exception):
+    pass
+
+def call_with_timeout(func, args=(), kwargs={}, timeout=5):
+    result = None
+    exception = None
+    
+    def target():
+        nonlocal result, exception
+        try:
+            result = func(*args, **kwargs)
+        except Exception as e:
+            exception = e
+    
+    thread = threading.Thread(target=target)
+    thread.start()
+    thread.join(timeout)
+    
+    if thread.is_alive():
+        raise TimeoutException("Function call timed out")
+    if exception:
+        raise exception
+    return result             
 if __name__ == '__main__':
     try:  
         global cursorsql,sht,sht1,wb,sht3,DZDay,StartText,breakText
@@ -598,7 +626,7 @@ if __name__ == '__main__':
                 else:
                     endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in timetohandle if datadate!=""]
                 
-        IsZF=True#是否是从转发的窗口获取数据
+    
         StartText=None#"昨天 21:15"# "2025年5月30日 3:14"#"0:25"#"2025年4月25日 5:48" 如果是None会根据配置自动找到开始统计的地方
         breakText=None#"0:12"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44 如果是None会根据配置自动找到结束统计的地方
         DZDay=endtimes#点赞收藏的哪天
@@ -778,7 +806,7 @@ if __name__ == '__main__':
                 info ["PayCode"]=MarkID 
                 insertedMarkID.append(info["wxID"])
 #---------------------------获取真实点赞的数据---------------------------
-        select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime FROM NodeHandleInfo" 
+        select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime FROM NodeHandleInfo " #where noteID='6857aa580000000012033ce3' and handleType in ('收藏')
         cursorsql.execute(select_sql)
         # 获取所有查询结果
         dataNodeDZ1 = cursorsql.fetchall() 

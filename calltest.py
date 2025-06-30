@@ -254,7 +254,7 @@ def InsertNoteHandleTocache( datas):
             elif(data["操作类型"]=="评论"):
                 countDT[key][2]+=1   
             datanode=[datac for datac in NodeTexts if datac[1]==data["篇"] ][0]        
-            if((countDT[key][0]>52 or countDT[key][1]>52) and currentHandleDate in endtimes and  datetime.datetime.strptime(datanode[7], "%Y-%m-%d %H:%M:%S").date()==currentHandleDate):
+            if((countDT[key][0]>32 or countDT[key][1]>32) and currentHandleDate in endtimes and  datetime.datetime.strptime(datanode[7], "%Y-%m-%d %H:%M:%S").date()==currentHandleDate):
                 status=0            
 #-------------------------------------------------------------------------------处理重复操作了的数据--------------------------------------------------
             if(len([dataC for dataC in toinsert  if dataC[0]==data["篇"] and dataC[1]==data["操作人ID"] and dataC[4]==data["操作类型"]])>0):
