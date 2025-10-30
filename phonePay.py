@@ -15,25 +15,28 @@ logger = logging.getLogger(__name__)
 class WechatVersion:
     def __init__(self, version):
         """初始化微信版本检查"""
-        self.version = version
-        if(version=="8.0.42"):
-            self.Plus="com.tencent.mm:id/ky9"#加号按钮 
-            self.Picture="com.tencent.mm:id/hnn"#相册按钮
-            self.SelectPicture="com.tencent.mm:id/je0"#选择图片按钮
-            self.AmountInput="com.tencent.mm:id/pbn"#金额输入框
-            self.OtherAmount="com.tencent.mm:id/lgk"#其他金额按钮
-            self. ConfirmAmount="com.tencent.mm:id/lfv"#赞赏码确认金额按钮
-            self.PayButton="com.tencent.mm:id/hql"#支付码确认金额按钮付款按钮
-            self.ZSperson="com.tencent.mm:id/lfq"#赞赏人姓名
-            self.PayPassword="com.tencent.mm:id/tenpay_keyboard_"# # 支付密码键盘 
-            self.PaySuccess="com.tencent.mm:id/jla"#不开通指纹支付按钮
-        elif(version=="8.0.54"):
+        self.version = version 
+        #默认版本为8.0.42
+        self.Plus="com.tencent.mm:id/ky9"#加号按钮 
+        self.Picture="com.tencent.mm:id/hnn"#相册按钮
+        self.SelectPicture="com.tencent.mm:id/je0"#选择图片按钮
+        self.AmountInput="com.tencent.mm:id/pbn"#金额输入框
+        self.OtherAmount="com.tencent.mm:id/lgk"#其他金额按钮
+        self.ConfirmAmount="com.tencent.mm:id/lfv"#赞赏码确认金额按钮
+        self.PayButton="com.tencent.mm:id/hql"#支付码确认金额按钮付款按钮
+        self.ZSperson="com.tencent.mm:id/lfq"#赞赏人姓名
+        self.PayPassword="com.tencent.mm:id/tenpay_keyboard_"# # 支付密码键盘 
+        self.PaySuccess="com.tencent.mm:id/jla"#不开通指纹支付按钮
+        self.liuyan="com.tencent.mm:id/lfs"#留言文本框
+        #com.tencent.mm:id/lfu
+
+        if(version=="8.0.54"):
             self.Plus="com.tencent.mm:id/plus_icon"#加号按钮 
             self.Picture="com.tencent.mm:id/hnn"#相册按钮
             self.SelectPicture="com.tencent.mm:id/je0"#选择图片按钮
             self.AmountInput="com.tencent.mm:id/pbn"#金额输入框
             self.OtherAmount="com.tencent.mm:id/lgk"#其他金额按钮
-            self. ConfirmAmount="com.tencent.mm:id/lfv"#赞赏码确认金额按钮
+            self.ConfirmAmount="com.tencent.mm:id/lfv"#赞赏码确认金额按钮
             self.PayButton="com.tencent.mm:id/keyboard_action"#支付码确认金额按钮付款按钮
             self.ZSperson="com.tencent.mm:id/lfq"#赞赏人姓名
             self.PayPassword="com.tencent.mm:id/tenpay_keyboard_"# # 支付密码键盘 
@@ -44,7 +47,7 @@ class WechatVersion:
             self.SelectPicture="com.tencent.mm:id/je0"#选择图片按钮
             self.AmountInput="com.tencent.mm:id/pbn"#金额输入框
             self.OtherAmount="com.tencent.mm:id/lgk"#其他金额按钮
-            self. ConfirmAmount="com.tencent.mm:id/lfv"#赞赏码确认金额按钮
+            self.ConfirmAmount="com.tencent.mm:id/lfv"#赞赏码确认金额按钮
             self.PayButton="com.tencent.mm:id/keyboard_action"#支付码确认金额按钮付款按钮
             self.ZSperson="com.tencent.mm:id/lfq"#赞赏人姓名
             self.PayPassword="com.tencent.mm:id/tenpay_keyboard_"# # 支付密码键盘 
@@ -127,6 +130,8 @@ class WeChatDonation:
                         return (False,None)
                     logger.info("扫描赞赏码成功")
                     userName=self.d(resourceId=self.OBJWC.ZSperson).get_text()  # 获取赞赏人姓名
+                    #self.d(resourceId=self.OBJWC.liuyan).set_text(str("代结:艾,(%s)%s" % (self.handleDate,self.actualDo)))  
+                    time.sleep(random.uniform(0.3, 0.5))  
                     # 输入金额
                     self.d(resourceId=self.OBJWC.AmountInput).set_text(str(amount))
                     if not self.d(resourceId=self.OBJWC. ConfirmAmount).exists(timeout=2):
@@ -135,7 +140,7 @@ class WeChatDonation:
                     logger.info("输入金额成功")    
                     if not self.d(resourceId=self.OBJWC. ConfirmAmount).exists(timeout=1):
                         logger.error("未找到确认金额按钮")
-                        return (False,None)                       
+                        return (False,None)                   
                     self.d(resourceId=self.OBJWC. ConfirmAmount).click() 
                     logger.info("点击赞赏成功") 
             else:#支付码
@@ -234,8 +239,12 @@ class WeChatDonation:
         with xw.App(visible=False) as app: 
                 # 用with 语句打开文件，可以确保万一出现异常情况，也能把文件关闭
             with app.books.open(self.excel_path) as wb:
+                self.handleDate=None
+                match = re.search(r'\((\d+-\d+)\)', self.excel_path) 
+                if match:
+                    self.handleDate = match.group(1)
                 sheet=wb.sheets["Sheet1"]  # 假设数据在第一个工作表
-                # 确保列名包含"赞赏码"和"金额"
+                # 确保列名包含"赞赏码"和"金额" 
                 row_values = sheet.range('B1').value
                 row_values2 = sheet.range('D1').value
                 required_columns = ["备注号", "按小红书查到的计算"] 
@@ -249,7 +258,7 @@ class WeChatDonation:
                 if  shtPayDetail==None:
                     shtPayDetail =wb.sheets.add(name='支付详情')
                     shtPayDetail.range(f'A{1}').value = list(("微信名", "备注号", "按小红书查到的金额","支付微信号","支付金额"))
-                exceldata= sheet.range('A2').expand().value
+                exceldata= sheet.range('A2:L2').expand("down").value
                 "处理所有支付"
                 if not self.connect_device():
                     return False
@@ -264,6 +273,16 @@ class WeChatDonation:
                     qrcode = int(row[1])#"", ""
                     amount = row[4]
                     wxname= row[0]
+                    actualDo=""
+                    if(row[9]!=None):
+                        end_index = row[9].find('\n')
+                        if end_index != -1:
+                            actualDo = row[9][:end_index]
+                        else:
+                            actualDo = row[9]  # 防止没有换行符的极端情况
+
+                    self.actualDo=actualDo.replace("Actual","")
+
                     logger.info(f"开始处理 Row:{index+2} ID:{qrcode} Name:{wxname} amount: {amount}")
                     if(amount>0):
                         if self.open_scanner():
@@ -334,11 +353,10 @@ def get_all_filenames(directory):
                 lastestPath=entry_path   
     return lastestPath
 if __name__ == "__main__":
-
-
+ 
     # Excel文件路径，确保文件存在且格式正确
     excel_path = get_all_filenames("E:/my/job/xhs/Result" ) #    excel_path = "E:/my/job/xhs/Result/结算(23-23)2025_06_24_09_43_20.xls"  
-    startindex=0#excel表格的行号-2
+    startindex=0        #excel表格的行号-2
     versionWC=WechatVersion("8.0.42") #微信版本号
     d = u2.connect() # 连接多台设备需要指定设备序列号
     # 授予存储权限

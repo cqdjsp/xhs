@@ -612,7 +612,7 @@ def call_with_timeout(func, args=(), kwargs={}, timeout=5):
     return result             
 if __name__ == '__main__':
     try:  
-        global cursorsql,sht,sht1,wb,sht3,DZDay,StartText,breakText
+        global cursorsql,sht,sht1,wb,sht3,DZDay,StartText,breakText,noteToCalDetail,noteToCal
         file_path='config\\config.csv'
         dataread=[]
         endtimes=[]
@@ -621,12 +621,15 @@ if __name__ == '__main__':
                 reader = csv.reader(file)
                 dataread = list(reader) 
                 timetohandle=dataread[5]
+                noteToCalDetail=dataread[2]
+                noteToCal=dataread[1]
                 if(len(dataread)<5 or timetohandle[0]=="" or (timetohandle[0]!="" and datetime.date.today()< datetime.datetime.strptime(timetohandle[0], "%Y/%m/%d").date())):
                     endtimes.append(datetime.date.today()- datetime.timedelta(days=1)) 
                 else:
                     endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in timetohandle if datadate!=""]
                 
-    
+               
+
         StartText=None#"昨天 21:15"# "2025年5月30日 3:14"#"0:25"#"2025年4月25日 5:48" 如果是None会根据配置自动找到开始统计的地方
         breakText=None#"0:12"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44 如果是None会根据配置自动找到结束统计的地方
         DZDay=endtimes#点赞收藏的哪天
@@ -814,10 +817,37 @@ if __name__ == '__main__':
         ZListConfirm=[]
         CListConfirm=[]
         OtherListConfirm=[]
-        for  DZ1 in dataNodeDZ1:
+
+        #----------------------------------------将获取到的实际点赞情况根据config再次变更，只是变更读取的内存而不改数据库中的status-------------------------------------------------
+        #由于可能有的要二次支付，如msc改为支付2元一个赞，所以需要第二次修改config，单独找出msc做的，再支付一遍，而calltest插入数据库中，可能还包含了其他的篇的status也为1
+        for  DZ1 in dataNodeDZ1: 
+            newstatus=DZ1[8]
+            if(DZ1[8]==1 ):
+                if(DZ1[1] in noteToCal):
+                    for i,ele in enumerate(noteToCal):
+                        if DZ1[1]==ele: 
+                            try:
+                                if  DZ1[5]=="赞":
+                                    if noteToCalDetail[i][0]!="1":
+                                        newstatus=0 
+                                elif DZ1[5]=="收藏":
+                                    if noteToCalDetail[i][1]!="1":
+                                        newstatus=0 
+                                elif DZ1[5]=="评论":
+                                    if noteToCalDetail[i][2]!="1":
+                                        newstatus=0 
+                            except Exception as ex:
+                                print(ex)
+                                traceback.print_exc()                        
+                        if(newstatus==0):    
+                            print(f'******{DZ1[2]} 对篇{DZ1[1]} 操作 {DZ1[5]} 不和要求')
+                            break
+                else:
+                    continue 
+
             time1=datetime.datetime.strptime(DZ1[6], "%Y-%m-%d %H:%M:%S") 
             if(time1.date() in DZDay):
-                if(DZ1[8]==0):
+                if(newstatus==0):
                     dataNodeDZ1Failed.append(DZ1)
                     continue
                 if(DZ1[5]=="赞"): 
@@ -867,11 +897,16 @@ if __name__ == '__main__':
             CountSummary["z"]+=infosToSave1["IsZ"]
             CountSummary["c"]+=infosToSave1["IsC"]
             CountSummary["p"]+=infosToSave1["IsP"]  
+
+            # if(infosToSave1["IsZ"]==0 and infosToSave1["IsC"]==0 and infosToSave1["IsP"]==0):
+            #     continue
+
+
             payAmount=infosToSave1["IsZ"]*priceZ+infosToSave1["IsC"]*priceC+infosToSave1["IsP"]*priceP
             payAmountJS=payAmount#计算减去没在小红书查到的，有的人发 2组赞藏，不写小红书名字，查不到
             wid=   infosToSave1["contentAll"].replace("@姜可艾 没有结算完","").replace("赞",",").replace("藏",",").replace("\u2005",",").replace("。",",").replace("（）",",")\
                 .replace("评",",").lower().replace("两组",",").replace("两组赞藏",",").replace("2组",",").replace("2组赞藏",",").replace("，",",").replace("\n",",").replace(" ",",")\
-                .replace('[聊天记录]',",").replace("已自查",",").replace("）",",").replace("（",",").split("引用,,的消息")[0]#.replace(".",",")
+                .replace('[聊天记录]',",").replace("、","").replace("已自查",",").replace("）",",").replace("（",",").split("引用,,的消息")[0]#.replace(".",",")
 
             widl=[]#微信里面用户发的自己的小红书号
             for i in  wid.split(","):
@@ -968,10 +1003,10 @@ if __name__ == '__main__':
             if(maxC>0):
                 for info in toInsertXML:
                     if(infosToSave1["wxID"]==info[0]):
-                        info[2]+=payAmount
-                        info[4]=info[4]+("\n\n"+payLoad)
+                        info[2]+=payAmount  #按用户发的总金额
+                        info[4]=info[4]+("\n\n"+payLoad)  
                         info[5]+= maxC 
-                        info[8]+=payAmountJS
+                        info[8]+=payAmountJS #按用户发的然后去小红书确认后的金额
                         find=True
                         break
                 if(find==False ): 
@@ -991,7 +1026,7 @@ if __name__ == '__main__':
                 zs=',\n'.join(f"{i[1]}({i[3]})" for i in zlist)
                 cs=',\n'.join(f"{i[1]}({i[3]})" for i in clist)
                 txml[6] =f"ActualZ:{str(len(zlist))} C:{str(len(clist))} P:{str(len(plist))}\n 赞:\n{zs}\n\n 藏:\n{cs}\n\n 评:{','.join(i[1]+i[3] for i in plist)} "
-                txml[7] =len(zlist)*priceZ+len(clist)*priceC+len(plist)*priceP
+                txml[7] =len(zlist)*priceZ+len(clist)*priceC+len(plist)*priceP #按小红书查到的金额
             txml[9]=CountSummary[txml[0]] +"\n\n\n拆分后：\n\n"+ "\n".join(CountSummary["列表"+txml[0]])#小红书的账号
             txml[10]=CountSummary["内容"+txml[0]] #用户发的信息
             payDetailRemark=""

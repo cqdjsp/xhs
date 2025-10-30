@@ -64,6 +64,7 @@ def GetInfoBySeq(catchlike,catchMention):
     global xhs_client
     cursor=""
     minendtime=min(endtimes)
+   
     while(catchlike>0): 
         note=  xhs_client.get_like_notifications(20,cursor)
         #note = xhs_client.get_note_by_id_from_html("67afecdf0000000028028c36","ABMuGHPzkrF3_R-x2Hv5gsctdOl93DbPpH4QcpptsADdg=")#,
@@ -83,7 +84,7 @@ def GetInfoBySeq(catchlike,catchMention):
                 else:
                     incurrectDay=True
                     break
-             
+            
             if(findendtime):break
             if(incurrectDay==False):continue
             if( noteInfo['type'] in handleType):
@@ -98,9 +99,14 @@ def GetInfoBySeq(catchlike,catchMention):
                             find=True
                             break
                     if(find==False):
-                        noteinfoSWeb=xhs_client.get_note_by_id(noteID,noteSec)
+                        try:  
+                            noteinfoSWeb=xhs_client.get_note_by_id(noteID,noteSec)
+                        except Exception as ex:
+                            print(ex)
+                            traceback.print_exc()    
+                            continue
                         InsertNoteInfoTocache(noteID,noteSec,noteinfoSWeb["user"]["user_id"],noteinfoSWeb["user"]["nickname"],noteinfoSWeb["title"],noteinfoSWeb["desc"],datetime.datetime.fromtimestamp(noteinfoSWeb['time']/1000).strftime("%Y-%m-%d %H:%M:%S"),
-                                              (noteinfoSWeb["interact_info"]["liked_count"]),(noteinfoSWeb["interact_info"]["collected_count"]),(noteinfoSWeb["interact_info"]["comment_count"]),(noteinfoSWeb["interact_info"]["share_count"]),noteInfo['item_info']['image'])
+                                            (noteinfoSWeb["interact_info"]["liked_count"]),(noteinfoSWeb["interact_info"]["collected_count"]),(noteinfoSWeb["interact_info"]["comment_count"]),(noteinfoSWeb["interact_info"]["share_count"]),noteInfo['item_info']['image'])
                         noteinfoTitle=noteinfoSWeb["title"]
                         cursorsql.execute(select_sql)
                         # 获取所有查询结果
@@ -135,14 +141,14 @@ def GetInfoBySeq(catchlike,catchMention):
                 else:
                     incurrectDay=True
                     break
-             
+            
             if(findendtime):break
             if(incurrectDay==False):continue
             if( noteInfo['type'] in handleType and 'target_comment' not in noteInfo['comment_info']  and remove_brackets_content(noteInfo['comment_info']["content"])!="" ):
                 noteID=noteInfo['item_info']['id'] if 'id' in noteInfo['item_info'] else ""
                 # if( noteID not in  noteToCal ):
                 #     continue
-              
+            
                 noteSec=noteInfo['item_info']['xsec_token'] if 'xsec_token' in noteInfo['item_info'] else ""
                 find=False
                 for notedatacache in dataNode:
@@ -150,8 +156,13 @@ def GetInfoBySeq(catchlike,catchMention):
                         noteinfoTitle=notedatacache[5]
                         find=True
                         break
-                if(find==False):
-                    noteinfoSWeb=xhs_client.get_note_by_id(noteID,noteSec)
+                if(find==False): 
+                    try:  
+                        noteinfoSWeb=xhs_client.get_note_by_id(noteID,noteSec)
+                    except Exception as ex:
+                        print(ex)
+                        traceback.print_exc()    
+                        continue
                     InsertNoteInfoTocache(noteID,noteSec,noteinfoSWeb["user"]["user_id"],noteinfoSWeb["user"]["nickname"],noteinfoSWeb["title"],noteinfoSWeb["desc"],datetime.datetime.fromtimestamp(noteinfoSWeb['time']/1000).strftime("%Y-%m-%d %H:%M:%S"),
                                             int(noteinfoSWeb["interact_info"]["liked_count"]),int(noteinfoSWeb["interact_info"]["collected_count"]),int(noteinfoSWeb["interact_info"]["comment_count"]),int(noteinfoSWeb["interact_info"]["share_count"]),noteInfo['item_info']['image'])
                     noteinfoTitle=noteinfoSWeb["title"]
@@ -172,6 +183,7 @@ def GetInfoBySeq(catchlike,catchMention):
         if(mentionNote["has_more"]==False):break  
         print(f"评论：mention{catchMention} cursor:{cursor}")
         sleep(random.uniform(0.2, 2.0))
+   
     return data
 def InsertNoteInfoTocacheEncry(note_id ,xsec_token ,user_id , nickname="", title="", desc="" , time="" ,likecount=0 ,collectedcount=0, commentcount=0 ,sharecount=0,image=""):
     global cursorsql
@@ -263,7 +275,7 @@ def InsertNoteHandleTocache( datas):
 #-----------------------------------------------------------------------------处理只要点赞或者收藏等不要全部的情况;处理某个时间后不再收赞或藏或评了--------------------------------------
             for i,ele in enumerate(noteToCal):
                 if data["篇"]==ele:
-                    notetimeNoList=notehandletimeNo[i].replace("\n","").split(";")
+                    notetimeNoList=notehandletimeNo[i].replace("\n","").replace("\r", "").split(";")
                     try:
                         if  data["操作类型"]=="赞":
                             if noteToCalDetail[i][0]!="1":
@@ -358,6 +370,9 @@ if __name__ == '__main__':
         handleTypePrice={'faved/item':0.5,'liked/item':1,"comment/comment":0,"comment/item":0.5}
         fieldnames = ['操作ID','预览图','篇','篇title','作者','操作人ID','操作人昵称','操作人头像','操作类型',  '操作时间','评论内容','价格']
         data =GetInfoBySeq(catchlike,catchMention)
+        if len(data)==0:
+            print("没有获取到新的数据")
+            exit(0)
         #data=[{ "篇":1 , "操作人ID":1,"操作人昵称":1 ,"操作人头像":1,"操作类型":1,"操作时间":1,"评论内容":1},{ "篇":2 , "操作人ID":2,"操作人昵称":2 ,"操作人头像":2,"操作类型":2,"操作时间":2,"评论内容":2},
               #{ "篇":1 , "操作人ID":1,"操作人昵称":1 ,"操作人头像":1,"操作类型":1,"操作时间":1,"评论内容":1}]
         sorted_list = sorted(data, key=lambda x: datetime.datetime.strptime(x["操作时间"], "%Y-%m-%d  %H:%M:%S"))
