@@ -117,7 +117,7 @@ def GetInfoBySeq(catchlike,catchMention):
                                 "作者":noteInfo['item_info']['user_info']["userid"] if  'user_info' in noteInfo['item_info'] else "",
                                 '操作人ID':noteInfo["user_info"]['userid'], '操作人昵称':noteInfo["user_info"]['nickname'],'操作人头像':noteInfo["user_info"]['image'],
                                 '操作类型':handleType[noteInfo['type']],'操作时间':datetime.datetime.fromtimestamp(noteInfo['time']).strftime("%Y-%m-%d %H:%M:%S"),'价格':handleTypePrice[noteInfo['type']],
-                                '评论内容': "",'操作ID': str(noteInfo['time']) +'_'+noteInfo['id']
+                                '评论内容': "",'操作ID': str(noteInfo['time']) +'_'+noteInfo['id'],'关注':noteInfo["user_info"]['indicator']=="你的粉丝" if 'indicator' in noteInfo["user_info"]  else False
                             }  )
         if(findendtime): break    
         catchlike-=20
@@ -175,7 +175,7 @@ def GetInfoBySeq(catchlike,catchMention):
                             "作者":noteInfo['item_info']['user_info']["userid"] if  'user_info' in noteInfo['item_info'] else "",
                             '操作人ID':noteInfo["user_info"]['userid'], '操作人昵称':noteInfo["user_info"]['nickname'],'操作人头像':noteInfo["user_info"]['image'],
                             '操作类型':handleType[noteInfo['type']],'操作时间':datetime.datetime.fromtimestamp(noteInfo['time']).strftime("%Y-%m-%d %H:%M:%S"),'价格':handleTypePrice[noteInfo['type']],
-                            '评论内容': noteInfo['comment_info']["content"],'操作ID': noteInfo['comment_info']["id"]
+                            '评论内容': noteInfo['comment_info']["content"],'操作ID': noteInfo['comment_info']["id"],'关注':noteInfo["user_info"]['indicator']=="你的粉丝" if 'indicator' in noteInfo["user_info"]  else False
                         }  )
         if(findendtime): break 
         catchMention-=20
@@ -246,8 +246,8 @@ def InsertNoteHandleTocache( datas):
         # 获取所有查询结果
         NodeTexts = cursorsql.fetchall()
         # 定义插入单条数据的 SQL 语句
-        insert_single_sql = '''INSERT INTO NodeHandleInfo (noteID ,handleUserID , handleUserName, handleUserImage, handleType , handleTime ,mentionContent ,status,addtime)
-        VALUES (?,?,?,?,?,?,?,?,?)'''
+        insert_single_sql = '''INSERT INTO NodeHandleInfo (noteID ,handleUserID , handleUserName, handleUserImage, handleType , handleTime ,mentionContent ,status,addtime,fans)
+        VALUES (?,?,?,?,?,?,?,?,?,?)'''
         toinsert=[]
         countDT={}#当天发布那篇的赞藏数，用来处理点的超过50的数据status置0
         for data in datas:
@@ -305,7 +305,7 @@ def InsertNoteHandleTocache( datas):
             if (len(findold)>0):
                 print(f'******你的账号 {data["操作人昵称"]} 对笔记《 {datanode[5]} 》的 {data["操作类型"]} 与过往重复，时间:{data["操作时间"]} ,{findold[0][6]}')
                 status=0
-            toinsert.append((data["篇"] , data["操作人ID"] ,data["操作人昵称"] ,data["操作人头像"],data["操作类型"],data["操作时间"],data["评论内容"],status,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")))
+            toinsert.append((data["篇"] , data["操作人ID"] ,data["操作人昵称"] ,data["操作人头像"],data["操作类型"],data["操作时间"],data["评论内容"],status,datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),data["关注"]))
         # 插入单条数据
         cursorsql.executemany(insert_single_sql, toinsert)
         for key in countDT:

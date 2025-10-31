@@ -356,7 +356,7 @@ if __name__ == "__main__":
  
     # Excel文件路径，确保文件存在且格式正确
     excel_path = get_all_filenames("E:/my/job/xhs/Result" ) #    excel_path = "E:/my/job/xhs/Result/结算(23-23)2025_06_24_09_43_20.xls"  
-    startindex=0        #excel表格的行号-2
+    startindex=30-2        #excel表格的行号-2
     versionWC=WechatVersion("8.0.42") #微信版本号
     d = u2.connect() # 连接多台设备需要指定设备序列号
     # 授予存储权限
