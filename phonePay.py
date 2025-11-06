@@ -237,7 +237,7 @@ class WeChatDonation:
     
     def process_payments(self):
         with xw.App(visible=False) as app: 
-                # 用with 语句打开文件，可以确保万一出现异常情况，也能把文件关闭
+            # 用with 语句打开文件，可以确保万一出现异常情况，也能把文件关闭
             with app.books.open(self.excel_path) as wb:
                 self.handleDate=None
                 match = re.search(r'\((\d+-\d+)\)', self.excel_path) 
@@ -301,7 +301,7 @@ class WeChatDonation:
                     # 每笔支付后稍作休息，避免操作过快
                     time.sleep(random.uniform(0.3, 1))
                 wb.save()
-                wb.close()
+                #wb.close()
                 logger.info(f"支付任务完成! 总共 {total_count} 笔，成功 {success_count} 笔")
                 return success_count == total_count
 
@@ -356,7 +356,7 @@ if __name__ == "__main__":
  
     # Excel文件路径，确保文件存在且格式正确
     excel_path = get_all_filenames("E:/my/job/xhs/Result" ) #    excel_path = "E:/my/job/xhs/Result/结算(23-23)2025_06_24_09_43_20.xls"  
-    startindex=30-2        #excel表格的行号-2
+    startindex=2-2        #excel表格的行号-2
     versionWC=WechatVersion("8.0.42") #微信版本号
     d = u2.connect() # 连接多台设备需要指定设备序列号
     # 授予存储权限

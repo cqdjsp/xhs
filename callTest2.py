@@ -651,7 +651,8 @@ if __name__ == '__main__':
         msgs.extend(msgsC)
         msgs.extend(msgsZF)
 #---------------------------------------------------------整理控件的数据到要保存的列表--------------------------------------------------------------------
-        infosToSave=[]
+        
+        infosToSave=[]#从聊天记录中整理出来要保存的数据
         starthandle=False
         # 输出消息内容
         for msg in msgs:
@@ -809,14 +810,14 @@ if __name__ == '__main__':
                 info ["PayCode"]=MarkID 
                 insertedMarkID.append(info["wxID"])
 #---------------------------获取真实点赞的数据---------------------------
-        select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime FROM NodeHandleInfo " #where noteID='6857aa580000000012033ce3' and handleType in ('收藏')
+        select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime,fans FROM NodeHandleInfo " #where noteID='6857aa580000000012033ce3' and handleType in ('收藏')
         cursorsql.execute(select_sql)
         # 获取所有查询结果
         dataNodeDZ1 = cursorsql.fetchall() 
         dataNodeDZ1Failed=[]#status为0的，但是已经点上的数据，为0是因为不符合要求，如只要10个，那第11个就是0，不接受了
-        ZListConfirm=[]
-        CListConfirm=[]
-        OtherListConfirm=[]
+        ZListConfirm=[]#小红书里面实际点赞成功的
+        CListConfirm=[]#小红书里面实际收藏成功的
+        OtherListConfirm=[]#小红书里面实际评论成功的
 
         #----------------------------------------将获取到的实际点赞情况根据config再次变更，只是变更读取的内存而不改数据库中的status-------------------------------------------------
         #由于可能有的要二次支付，如msc改为支付2元一个赞，所以需要第二次修改config，单独找出msc做的，再支付一遍，而calltest插入数据库中，可能还包含了其他的篇的status也为1
@@ -824,6 +825,8 @@ if __name__ == '__main__':
             newstatus=DZ1[8]
             if(DZ1[8]==1 ):
                 if(DZ1[1] in noteToCal):
+                    # if(DZ1[10]==0): 
+                    #     print(f'！！！！{wxname} 做{xhsid[5]}的账号 {xhsid[3]} 没有关注')
                     for i,ele in enumerate(noteToCal):
                         if DZ1[1]==ele: 
                             try:
@@ -891,7 +894,7 @@ if __name__ == '__main__':
         NotReceiveZC=[]
         ReceiveZC={} 
         CountSummary={"z":0,"c":0,"p":0,"Nz":0,"Nc":0,"Np":0,}#微信上统计的赞藏评个数，和没收到的赞藏评个数 ;还有 微信号对应的小红书号，内容+微信号 对应的聊天记录
-        sortedInfosToSave = sorted(infosToSave, key=lambda p: p ["MarkID"])
+        sortedInfosToSave = sorted(infosToSave, key=lambda p: p ["MarkID"])#先按MarkID排序，方便后面插入数据
       
         for infosToSave1 in sortedInfosToSave:
             CountSummary["z"]+=infosToSave1["IsZ"]
@@ -903,7 +906,7 @@ if __name__ == '__main__':
 
 
             payAmount=infosToSave1["IsZ"]*priceZ+infosToSave1["IsC"]*priceC+infosToSave1["IsP"]*priceP
-            payAmountJS=payAmount#计算减去没在小红书查到的，有的人发 2组赞藏，不写小红书名字，查不到
+            payAmountJS=payAmount#计算减去没在小红书查到的，有的人发 2组赞藏，不写小红书名字，查不到 #会写入excel表格中的“按用户发的然后从小红书查找计算”
             wid=   infosToSave1["contentAll"].replace("@姜可艾 没有结算完","").replace("赞",",").replace("藏",",").replace("\u2005",",").replace("。",",").replace("（）",",")\
                 .replace("评",",").lower().replace("两组",",").replace("两组赞藏",",").replace("2组",",").replace("2组赞藏",",").replace("，",",").replace("\n",",").replace(" ",",")\
                 .replace('[聊天记录]',",").replace("、","").replace("已自查",",").replace("）",",").replace("（",",").split("引用,,的消息")[0]#.replace(".",",")
@@ -940,7 +943,12 @@ if __name__ == '__main__':
                                 ReceiveZC[infosToSave1["wxID"]].append(zdata) 
                         else:
                             ReceiveZC[infosToSave1["wxID"]]= [zdata]
-                 
+                        if(zdata[10]==0):
+                            CountSummary["Nz"]+=1
+                            payAmountJS-=1*priceZ 
+                            payLoad+=f"\n——{ziD}:Z{str(priceZ)}  "
+                            remark="未关注" 
+                            NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ziD,"赞",remark,infosToSave1["content"]))
                 for ddd in widl: #看看用户发的小红书号是不是不在里面，好知道用户发的没有点上
                     if(ddd not in findedxhs and "小红薯"+ddd not in findedxhs and "用户"+ddd not in findedxhs):
                         CountSummary["Nz"]+=1
@@ -950,6 +958,13 @@ if __name__ == '__main__':
                         if(ddd in dataNodeDZ1FailedXHSID):
                             remark="收到,但不符合要求"
                         NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,"赞",remark,infosToSave1["content"]))
+                # for zii in ZListConfirm:
+                #     if(zii[10]==0):
+                #         CountSummary["Nz"]+=1
+                #         payAmountJS-=1*priceZ
+                #         payLoad+=f"\n——{ddd}:Z{str(priceZ)}  "
+                #         remark="未关注" 
+                #         NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,"赞",remark,infosToSave1["content"]))
             findedxhs.clear()
             if(infosToSave1["IsC"]>0): 
                 dataNodeDZ1FailedXHSID=  GetXHSID(dataNodeDZ1Failed,"收藏")
@@ -962,6 +977,12 @@ if __name__ == '__main__':
                                 ReceiveZC[infosToSave1["wxID"]].append(zdata) 
                         else:
                             ReceiveZC[infosToSave1["wxID"]]= [zdata] 
+                    if(zdata[10]==0):
+                        CountSummary["Nc"]+=1
+                        payAmountJS-=1*priceC
+                        payLoad+=f"\n——{ziD}:Z{str(priceC)}  "
+                        remark="未关注" 
+                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ziD,"藏",remark,infosToSave1["content"]))
                 for ddd in widl: 
                     if(ddd not in findedxhs and "小红薯"+ddd not in findedxhs and "用户"+ddd not in findedxhs):
                         CountSummary["Nc"]+=1
@@ -971,6 +992,13 @@ if __name__ == '__main__':
                         if(ddd in dataNodeDZ1FailedXHSID):
                             remark="收到,但不符合要求"
                         NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,"藏",remark,infosToSave1["content"]))
+                # for zii in CListConfirm:
+                #     if(zii[10]==0):
+                #         CountSummary["Nc"]+=1
+                #         payAmountJS-=1*priceC
+                #         payLoad+=f"\n——{ddd}:Z{str(priceC)}  "
+                #         remark="未关注" 
+                #         NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,"藏",remark,infosToSave1["content"]))
             findedxhs.clear()
             if(infosToSave1["IsP"]>0):
                 dataNodeDZ1FailedXHSID=  GetXHSID(dataNodeDZ1Failed,"评论")
@@ -983,6 +1011,12 @@ if __name__ == '__main__':
                                 ReceiveZC[infosToSave1["wxID"]].append(zdata) 
                         else:
                             ReceiveZC[infosToSave1["wxID"]]=[zdata] 
+                    if(zdata[10]==0):
+                        CountSummary["Np"]+=1
+                        payAmountJS-=1*priceP
+                        payLoad+=f"\n——{ziD}:Z{str(priceP)}  "
+                        remark="未关注" 
+                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ziD,"评",remark,infosToSave1["content"]))                            
                 for ddd in widl: 
                     if(ddd not in findedxhs and "小红薯"+ddd not in findedxhs and "用户"+ddd not in findedxhs):
                         CountSummary["Np"]+=1
@@ -992,6 +1026,13 @@ if __name__ == '__main__':
                         if(ddd in dataNodeDZ1FailedXHSID):
                             remark="收到,但不符合要求"
                         NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,"评",remark,infosToSave1["content"])) 
+                # for zii in OtherListConfirm:
+                #     if(zii[10]==0):
+                #         CountSummary["Np"]+=1
+                #         payAmountJS-=1*priceP
+                #         payLoad+=f"\n——{ddd}:Z{str(priceP)}  "
+                #         remark="未关注" 
+                #         NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ddd,"评",remark,infosToSave1["content"]))
 #--------------------------------------------------------------------数据库列表的组装-------------------------------------------------------------                
             toInsertSqllite.append((infosToSave1["wxID"],infosToSave1["xhsID"],infosToSave1["IsZ"],infosToSave1["IsC"],infosToSave1["IsP"],infosToSave1["ZhengMing"],
                                     infosToSave1["IsConfirm"],infosToSave1["IsPay"],datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S"),infosToSave1["content"],infosToSave1["contentAll"]))
@@ -1018,6 +1059,10 @@ if __name__ == '__main__':
                 resultCF = [key for key, value in ReceiveZC.items() if key!=wxname and any(xhsid[3] in item for item in value)]#多个人发了同一个小红书号
                 if(len(resultCF)>0):
                     print(f'！！！！{wxname} 与 {",".join(resultCF)} 重复了 {xhsid[3]}')
+                if(xhsid[10]==0):
+                    print(f'！！！！{wxname} 做{xhsid[5]}的账号 {xhsid[3]} 没有关注')
+        
+        
         for txml in toInsertXML: 
             if(txml[0] in ReceiveZC) : 
                 zlist=list(filter(lambda x: "赞" in x, ReceiveZC[txml[0]]))
@@ -1068,8 +1113,8 @@ if __name__ == '__main__':
 
 
 #---------------------------------------------------------插入数据库和Excel-----------------------------------------------------------------------------
-        InsertWXToXHScache(toInsertSqlliteWXXHS)
-        InsertWXInfoTocache(toInsertSqllite) 
+        #InsertWXToXHScache(toInsertSqlliteWXXHS)
+        #InsertWXInfoTocache(toInsertSqllite) 
         app = xw.App(visible=False, add_book=False)
         app.display_alerts = False    # 关闭一些提示信息，可以加快运行速度。 默认为 True。
         app.screen_updating = False    # 更新显示工作表的内容。默认为 True。关闭它也可以提升运行速度。
