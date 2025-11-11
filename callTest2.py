@@ -25,7 +25,7 @@ class DHMsg:
         self.content=content
         self.time=time
         self.fromw=fromw 
-def xor_encrypt_decrypt(text, key):
+def xor_encrypt_decrypt(text, key=1123):
     encrypted_text = ""
     for char in text:
         encrypted_text += chr(ord(char) ^ key)
@@ -610,9 +610,41 @@ def call_with_timeout(func, args=(), kwargs={}, timeout=5):
     if exception:
         raise exception
     return result             
+def GetNodeTextInfo(parameter):
+    select_sql = "SELECT id,note_id,nickname,title,desc,time,likecount,collectedcount,commentcount,sharecount,image,xsec_token,user_id FROM NodeTextInfo WHERE note_id = ?" 
+    if(UseInEncry==True):
+        select_sql = "SELECT id,note_id,nickname,title,desc,time,likecount,collectedcount,commentcount,sharecount,image,xsec_token,user_id FROM NodeTextInfoEncry WHERE note_id = ?" 
+    cursorsql.execute(select_sql, (parameter,))
+    # 获取所有查询结果
+    dataNode = cursorsql.fetchall()     
+    if(UseInEncry==False):
+        dataNode=[ [xor_encrypt_decrypt(datain) if isinstance(datain,int)==False else datain for datain in data ] for data in dataNode]
+    return dataNode
+def GetNodeTextInfo(parameter):
+    select_sql = "SELECT id,note_id,nickname,title,desc,time,likecount,collectedcount,commentcount,sharecount,image,xsec_token,user_id FROM NodeTextInfo WHERE note_id = ?" 
+    if(UseInEncry==True):
+        select_sql = "SELECT id,note_id,nickname,title,desc,time,likecount,collectedcount,commentcount,sharecount,image,xsec_token,user_id FROM NodeTextInfoEncry WHERE note_id = ?" 
+        parameter=xor_encrypt_decrypt(parameter)
+    cursorsql.execute(select_sql, (parameter,))
+    # 获取所有查询结果
+    dataNode = cursorsql.fetchall()     
+    if(UseInEncry==True):
+        dataNode=[ [xor_encrypt_decrypt(datain) if isinstance(datain,int)==False else datain for datain in data ] for data in dataNode]
+    return dataNode
+def GetNodeHandleInfo():
+    select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime,fans FROM NodeHandleInfo " #where noteID='6857aa580000000012033ce3' and handleType in ('收藏')
+    if(UseInEncry==True):
+        select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime,fans FROM NodeHandleInfoEncry " 
+    cursorsql.execute(select_sql)
+    # 获取所有查询结果
+    dataNode = cursorsql.fetchall()    
+    if(UseInEncry==True):  
+        dataNode=[ [xor_encrypt_decrypt(datain) if isinstance(datain,int)==False else datain for datain in data ] for data in dataNode]
+    return dataNode
 if __name__ == '__main__':
     try:  
         global cursorsql,sht,sht1,wb,sht3,DZDay,StartText,breakText,noteToCalDetail,noteToCal
+        UseInEncry=False
         file_path='config\\config.csv'
         dataread=[]
         endtimes=[]
@@ -627,8 +659,6 @@ if __name__ == '__main__':
                     endtimes.append(datetime.date.today()- datetime.timedelta(days=1)) 
                 else:
                     endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in timetohandle if datadate!=""]
-                
-               
 
         StartText=None#"昨天 21:15"# "2025年5月30日 3:14"#"0:25"#"2025年4月25日 5:48" 如果是None会根据配置自动找到开始统计的地方
         breakText=None#"0:12"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44 如果是None会根据配置自动找到结束统计的地方
@@ -810,10 +840,8 @@ if __name__ == '__main__':
                 info ["PayCode"]=MarkID 
                 insertedMarkID.append(info["wxID"])
 #---------------------------获取真实点赞的数据---------------------------
-        select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime,fans FROM NodeHandleInfo " #where noteID='6857aa580000000012033ce3' and handleType in ('收藏')
-        cursorsql.execute(select_sql)
-        # 获取所有查询结果
-        dataNodeDZ1 = cursorsql.fetchall() 
+        
+        dataNodeDZ1 = GetNodeHandleInfo() # 获取所有查询结果
         dataNodeDZ1Failed=[]#status为0的，但是已经点上的数据，为0是因为不符合要求，如只要10个，那第11个就是0，不接受了
         ZListConfirm=[]#小红书里面实际点赞成功的
         CListConfirm=[]#小红书里面实际收藏成功的
@@ -1082,11 +1110,9 @@ if __name__ == '__main__':
         ReceiveZC2= [value for d in ReceiveZC for value in ReceiveZC[d]]
         ReceiveZC2grouped = {}
         for rzc in ReceiveZC2:
-            if(rzc[1] not in ReceiveZC2grouped):
-                select_sql = "SELECT id,note_id,nickname,title,desc,time,likecount,collectedcount,commentcount,sharecount,image,xsec_token,user_id FROM NodeTextInfo WHERE note_id = ?" 
-                cursorsql.execute(select_sql, (rzc[1],))
+            if(rzc[1] not in ReceiveZC2grouped): 
                 # 获取所有查询结果
-                dataNodeDZ1 = cursorsql.fetchall() 
+                dataNodeDZ1 = GetNodeTextInfo(rzc[1])   
                 ReceiveZC2grouped[rzc[1]]=[]
                 ReceiveZC2grouped[rzc[1]].extend([dataNodeDZ1,0,0,0])
             
@@ -1113,8 +1139,8 @@ if __name__ == '__main__':
 
 
 #---------------------------------------------------------插入数据库和Excel-----------------------------------------------------------------------------
-        #InsertWXToXHScache(toInsertSqlliteWXXHS)
-        #InsertWXInfoTocache(toInsertSqllite) 
+        InsertWXToXHScache(toInsertSqlliteWXXHS)
+        InsertWXInfoTocache(toInsertSqllite) 
         app = xw.App(visible=False, add_book=False)
         app.display_alerts = False    # 关闭一些提示信息，可以加快运行速度。 默认为 True。
         app.screen_updating = False    # 更新显示工作表的内容。默认为 True。关闭它也可以提升运行速度。

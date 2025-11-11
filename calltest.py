@@ -67,9 +67,7 @@ def GetInfoBySeq(catchlike,catchMention):
    
     while(catchlike>0): 
         note=  xhs_client.get_like_notifications(20,cursor)
-        #note = xhs_client.get_note_by_id_from_html("67afecdf0000000028028c36","ABMuGHPzkrF3_R-x2Hv5gsctdOl93DbPpH4QcpptsADdg=")#,
-        #print(json.dumps(note, indent=4))
-        #print(help.get(note))
+ 
         findendtime=False#找到停止的时间也不再找了。退出while
         incurrectDay=False
         for noteInfo in note['message_list']:
@@ -89,8 +87,6 @@ def GetInfoBySeq(catchlike,catchMention):
             if(incurrectDay==False):continue
             if( noteInfo['type'] in handleType):
                     noteID=noteInfo['item_info']['id'] if 'liked/item' ==noteInfo['type'] else noteInfo['item_info']["attach_item_info"]["id"] 
-                    # if(noteID not in  noteToCal):
-                    #     continue
                     noteSec=noteInfo['item_info']['xsec_token'] if 'liked/item' ==noteInfo['type'] else noteInfo['item_info']["attach_item_info"]["xsec_token"] 
                     find=False
                     for notedatacache in dataNode:
@@ -199,17 +195,16 @@ def InsertNoteInfoTocacheEncry(note_id ,xsec_token ,user_id , nickname="", title
 def InsertNoteHandleTocacheEncry( datas):
     global cursorsql
     # 定义插入单条数据的 SQL 语句
-    insert_single_sql = '''INSERT INTO NodeHandleInfoEncry (noteID ,handleUserID , handleUserName, handleUserImage, handleType , handleTime ,mentionContent ,status,addtime)
-     VALUES (?,?,?,?,?,?,?,?,?)'''
+    insert_single_sql = '''INSERT INTO NodeHandleInfoEncry (noteID ,handleUserID , handleUserName, handleUserImage, handleType , handleTime ,mentionContent ,status,addtime,fans)
+     VALUES (?,?,?,?,?,?,?,?,?,?)'''
     toinsert=[]
     for data in datas:
         toinsert.append((xor_encrypt_decrypt(data["篇"] ) ,xor_encrypt_decrypt(data["操作人ID"] ) ,xor_encrypt_decrypt(data["操作人昵称"]) ,xor_encrypt_decrypt(data["操作人头像"]) ,xor_encrypt_decrypt(data["操作类型"]
-                       ) ,xor_encrypt_decrypt(data["操作时间"]) ,xor_encrypt_decrypt(data["评论内容"]) ,xor_encrypt_decrypt("1") ,xor_encrypt_decrypt(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))))
+                       ) ,xor_encrypt_decrypt(data["操作时间"]) ,xor_encrypt_decrypt(data["评论内容"]) ,xor_encrypt_decrypt("1") ,xor_encrypt_decrypt(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")),xor_encrypt_decrypt(data["关注"])))
     # 插入单条数据
     cursorsql.executemany(insert_single_sql, toinsert)
  
     conn.commit()
-
 def InsertNoteInfoTocache(note_id ,xsec_token ,user_id , nickname="", title="", desc="" , time="" ,likecount=0 ,collectedcount=0, commentcount=0 ,sharecount=0,image=""):
     global cursorsql,InEncry,InNormal
     if(InNormal):
@@ -331,10 +326,12 @@ def xor_encrypt_decrypt(text, key=1123):
     return encrypted_text
 if __name__ == '__main__':
     try:  
+        #pyinstaller --onefile your_script.py
+
         global xhs_client
         global handleType,noteToCal,endtimes,InNormal,InEncry,noteToCalDetail,notehandletimeNo
         InEncry=False
-        InNormal=True
+        InNormal= not InEncry
         cookie = " "
         #--------------------------------------------------------------------------读配置的参数--------------------------------------------
         file_path='config\\config.csv'
@@ -354,11 +351,7 @@ if __name__ == '__main__':
                 catchlike= int(dataread[4][0])
                 catchMention=int (dataread[4][1])  
                 noteToCalDetail=dataread[2]
-                notehandletimeNo=dataread[3]
-        # catchlike=2000#获取100个赞藏数据
-        # catchMention=300#获取100个评论数据
-        # noteToCal=[""]#,"67d546e200000000060284cb"
-        # endtimes=[datetime.date(2025, 3, 26)] 
+                notehandletimeNo=dataread[3] 
         xhs_client = XhsClient(cookie, sign=sign)
         # 连接到 SQLite 数据库，如果数据库文件不存在则会创建一个新的数据库文件
         conn = sqlite3.connect('config\\WorkData.db')
@@ -372,95 +365,9 @@ if __name__ == '__main__':
         data =GetInfoBySeq(catchlike,catchMention)
         if len(data)==0:
             print("没有获取到新的数据")
-            exit(0)
-        #data=[{ "篇":1 , "操作人ID":1,"操作人昵称":1 ,"操作人头像":1,"操作类型":1,"操作时间":1,"评论内容":1},{ "篇":2 , "操作人ID":2,"操作人昵称":2 ,"操作人头像":2,"操作类型":2,"操作时间":2,"评论内容":2},
-              #{ "篇":1 , "操作人ID":1,"操作人昵称":1 ,"操作人头像":1,"操作类型":1,"操作时间":1,"评论内容":1}]
+            exit(0) 
         sorted_list = sorted(data, key=lambda x: datetime.datetime.strptime(x["操作时间"], "%Y-%m-%d  %H:%M:%S"))
-        InsertNoteHandleTocache(sorted_list)
-
-        #dataread=[]
-        # if os.path.exists(file_path): 
-        #     with open(file_path, mode='r', newline='', encoding='utf-8') as file:
-        #         reader = csv.DictReader(file)
-        #         dataread = list(reader)
-        #     if(len(dataread)>0):  
-        #         with open(file_path, mode='a', newline='', encoding='utf-8') as file:
-        #             writer = csv.DictWriter(file, fieldnames=fieldnames) 
-        #             for toaddData in data:
-        #                 existData=False
-        #                 for datareadInfo in dataread:
-        #                     if('操作ID' in datareadInfo and toaddData['操作ID']  ==datareadInfo['操作ID']):
-        #                         existData=True
-        #                         break
-        #                 if(existData==False):
-        #                     writer.writerow(toaddData)
-        #     else: 
-        #         with open(file_path, mode='w', newline='', encoding='utf-8') as file:
-        #             writer = csv.DictWriter(file, fieldnames=fieldnames)
-        #             writer.writeheader()
-        #             writer.writerows(data)                        
-        # else:
-        #     with open(file_path, mode='x', newline='', encoding='utf-8') as file:
-        #         writer = csv.DictWriter(file, fieldnames=fieldnames)
-        #         writer.writeheader()
-        #         writer.writerows(data)   
-
-        # with open(file_path, mode='r', newline='', encoding='utf-8') as file:
-        #     reader = csv.DictReader(file)
-        #     dataread = list(reader)
-        # handuserPrice={}
-        # handuserNicName={}
-        # handuserPriceToAdd=[]
-        # datareadCode=[]
-        # paycode={}
-        # with open('config//IDToPayCode.csv', mode='r', newline='', encoding='utf-8') as file:
-        #     reader = csv.DictReader(file)
-        #     datareadCode = list(reader)
-        # if(len(dataread)>0):
-        #     for dataInfo in dataread: 
-        #         paycodeSet=""
-        #         for datas in datareadCode:
-        #             if(datas["ID"]==dataInfo["操作人ID"]):
-        #                 paycodeSet=datas["支付码ID"]
-        #                 break
-        #         paycode[dataInfo["操作人ID"] ]=paycodeSet
-        #         if( dataInfo["操作人ID"]  in handuserPrice):
-        #             handuserPrice[dataInfo["操作人ID"] ]+=float(dataInfo['价格'])
-        #         else:
-        #             handuserPrice[dataInfo["操作人ID"] ]=float(dataInfo['价格'])
-        #             handuserNicName[dataInfo["操作人ID"] ]=dataInfo['操作人昵称']
-                    
-        #     for handinfo in handuserPrice:
-        #         paycode[dataInfo["操作人ID"] ]=""
-        #         for datas in datareadCode:
-        #             if(datas["ID"]==handinfo):
-        #                 paycode[dataInfo["操作人ID"] ]=datas["支付码ID"]
-        #         handuserPriceToAdd.append({"用户ID":handinfo,'用户名':handuserNicName[handinfo],"总额":handuserPrice[handinfo],"支付码":paycode[dataInfo["操作人ID"] ]})
-        #     priceHeader=['用户ID','用户名','总额','支付码']
-        #     # with open('output.csv', mode='a', newline='', encoding='utf-8') as file:
-        #     #     writer = csv.DictWriter(file,priceHeader) 
-        #     #     writer.writeheader()
-        #     #     writer.writerows(handuserPriceToAdd)
-    
-        #     app = xw.App(visible=True, add_book=False)
-        #     app.display_alerts = False    # 关闭一些提示信息，可以加快运行速度。 默认为 True。
-        #     app.screen_updating = True    # 更新显示工作表的内容。默认为 True。关闭它也可以提升运行速度。
-        #     wb = xw.Book()# app.books.open('结算.xls') 
-        #     sht = wb.sheets[0] 
-        #     # 将a1,a2,a3输入第一列，b1,b2,b3输入第二列
-        #     sht.range('A1') .value=priceHeader 
-        #     sht.range('A2') .options(transpose=True).value=list(handuserPrice.keys())
-        #     sht.range('B2') .options(transpose=True).value=list(handuserNicName.values())
-        #     sht.range('C2') .options(transpose=True).value=list(handuserPrice.values())
-        #     i=2
-        #     for paycodekey in paycode:
-        #         if(paycode[paycodekey]!=""):
-        #             filePath = os.path.join(os.getcwd(), f'config\\zfcode\\{paycode[paycodekey]}.jpg')
-        #             add_center(sht, 'D'+str(i), filePath, width=150, height=150)
-        #         i+=1
-        #     wb.save( "Result\\结算"+datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+".xls" )
-        #     wb.close()
-            #wb.app.quit()
+        InsertNoteHandleTocache(sorted_list) 
     except Exception as ex:
         print(ex)
         traceback.print_exc()
