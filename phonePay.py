@@ -362,7 +362,6 @@ if __name__ == "__main__":
     # 授予存储权限
     d.shell("pm grant com.github.uiautomator android.permission.WRITE_EXTERNAL_STORAGE")
     d.shell("pm grant com.github.uiautomator android.permission.READ_EXTERNAL_STORAGE") 
- 
     print(d.info)
     # 创建支付助手实例
     donation = WeChatDonation(excel_path, password="705464",startindex=startindex,versionWC=versionWC)  # 替换为实际支付密码或留空

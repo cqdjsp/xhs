@@ -1,3 +1,10 @@
 1.安装python环境python-3.11.4-amd64.exe
-2.pip install playwright         playwright install
-3.
+2.pip install playwright        
+3.playwright install chromium
+4.pip install lxml
+5.pip install requests
+pip install xlwings
+pip install Pillow
+pip install comtypes
+pip install pyperclip
+pip install psutil

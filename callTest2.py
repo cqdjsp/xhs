@@ -1088,7 +1088,7 @@ if __name__ == '__main__':
                 if(len(resultCF)>0):
                     print(f'！！！！{wxname} 与 {",".join(resultCF)} 重复了 {xhsid[3]}')
                 if(xhsid[10]==0):
-                    print(f'！！！！{wxname} 做{xhsid[5]}的账号 {xhsid[3]} 没有关注')
+                    print(f'！！！！{wxname} 做{xhsid[5]}的账号 {xhsid[3]} 没有关注，麻烦关注一下，再做数据')
         
         
         for txml in toInsertXML: 

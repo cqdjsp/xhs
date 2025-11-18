@@ -17,7 +17,7 @@ def sign(uri, data=None, a1="", web_session=""):
             with sync_playwright() as playwright:
                 stealth_js_path = "E:\\my\\job\\xhsTG\\public\\stealth.min.js"
                 chromium = playwright.chromium
-                browser_path = os.path.join(os.getenv('LOCALAPPDATA'), 'ms-playwright', 'chromium-1148', 'chrome-win', 'chrome.exe')
+                browser_path = os.path.join(os.getenv('LOCALAPPDATA'), 'ms-playwright', 'chromium-1194', 'chrome-win', 'chrome.exe')
                 # 如果一直失败可尝试设置成 False 让其打开浏览器，适当添加 sleep 可查看浏览器状态
                 browser = chromium.launch(executable_path=browser_path,headless=True)
 
