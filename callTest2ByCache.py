@@ -4,28 +4,23 @@
 #3.查小红书的 “按小红书查到的计算”列和“按用户发的然后从小红书查找计算”列对比的结果列“按小红书查到的计算==按用户发的然后从小红书查找计算”结果为false的，看看为什么
 #3.1如果不是true，看是否有不同人但是小红书号名字一样，导致给他多结算了，要按照用户发的结算
 #4.看无支付码sheet，里是不是有人已经发支付码了
-from wxautoMy.wxauto  import WeChat
-from  wxautoMy.wxauto import uiautomation as uia
-import uiautomator2 as u2
 import xlwings as xw
 import sqlite3 
 import datetime
 import os
 import traceback
 from PIL import Image
-import time
 import csv
 import re
-import ctypes
 import threading
 class DHMsg:
-    def __init__(self, type, myType,sender,content,time,fromw):
+    def __init__(self,id,sender, myType, type,content,time):
         self.type = type
         self.myType = myType
         self.sender=sender
         self.content=content
         self.time=time
-        self.fromw=fromw 
+        self.id=id 
 def xor_encrypt_decrypt(text, key=1123):
     encrypted_text = ""
     for char in text:
@@ -461,42 +456,25 @@ if __name__ == '__main__':
                 else:
                     endtimes=[datetime.datetime.strptime(datadate, "%Y/%m/%d").date() for datadate in timetohandle if datadate!=""]
 
-        StartText=None#"昨天 21:15"# "2025年5月30日 3:14"#"0:25"#"2025年4月25日 5:48" 如果是None会根据配置自动找到开始统计的地方
+        StartText=""#"昨天 21:15"# "2025年5月30日 3:14"#"0:25"#"2025年4月25日 5:48" 如果是None会根据配置自动找到开始统计的地方
         breakText=None#"0:12"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44 如果是None会根据配置自动找到结束统计的地方
         DZDay=endtimes#点赞收藏的哪天
         priceZ=1
         priceC=0.5
         priceP=0.5    
-        wx = WeChat()
-        wx.ChatWith(who="姜可艾群")
         conn = sqlite3.connect('config\\WorkData.db')
         cursorsql = conn.cursor()
         CreateTableWxInfo()
         CreateTableWxToXHS() 
 #---------------------------------------------------------获取聊天窗口控件信息--------------------------------------------------------------------
-        
-        
-        
-        versionWC=WechatVersion("8.0.42") #微信版本号
-        d = u2.connect() # 连接多台设备需要指定设备序列号
-        # 授予存储权限
-        d.shell("pm grant com.github.uiautomator android.permission.WRITE_EXTERNAL_STORAGE")
-        d.shell("pm grant com.github.uiautomator android.permission.READ_EXTERNAL_STORAGE") 
-        print(d.info)        
-        
-        
-        
-        
-        
-        
-        
-        select_sql = "SELECT id,sender,myType,type,content,time FROM WXMSG WHERE id > ?" 
-        cursorsql.execute(select_sql, (-1,))
+        select_sql = """ SELECT id,sender,myType,type,content,time FROM WXMSG  WHERE DATE(time) IN ({}) """.format(", ".join(["?"] * len(endtimes))) 
+        #select_sql = "SELECT id,sender,myType,type,content,time FROM WXMSG WHERE time > ?" 
+        cursorsql.execute(select_sql,[date_obj.strftime("%Y-%m-%d") for date_obj in endtimes])
         # 获取所有查询结果
-        dataNode = cursorsql.fetchall()  
-       
-        msgs=[] 
-        msgs.extend(dataNode)
+        dataNode = cursorsql.fetchall()   
+        msgs=[]
+        for data in dataNode: 
+            msgs.append(DHMsg(data[0],data[1],data[2],data[3],data[4],data[5]))
 #---------------------------------------------------------整理控件的数据到要保存的列表--------------------------------------------------------------------
         
         infosToSave=[]#从聊天记录中整理出来要保存的数据
@@ -822,12 +800,12 @@ if __name__ == '__main__':
                                 ReceiveZC[infosToSave1["wxID"]].append(zdata) 
                         else:
                             ReceiveZC[infosToSave1["wxID"]]= [zdata] 
-                    if(zdata[10]==0):
-                        CountSummary["Nc"]+=1
-                        payAmountJS-=1*priceC
-                        payLoad+=f"\n——{ziD}:Z{str(priceC)}  "
-                        remark="未关注" 
-                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ziD,"藏",remark,infosToSave1["content"]))
+                        if(zdata[10]==0):
+                            CountSummary["Nc"]+=1
+                            payAmountJS-=1*priceC
+                            payLoad+=f"\n——{ziD}:Z{str(priceC)}  "
+                            remark="未关注" 
+                            NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ziD,"藏",remark,infosToSave1["content"]))
                 for ddd in widl: 
                     if(ddd not in findedxhs and "小红薯"+ddd not in findedxhs and "用户"+ddd not in findedxhs):
                         CountSummary["Nc"]+=1
@@ -856,12 +834,12 @@ if __name__ == '__main__':
                                 ReceiveZC[infosToSave1["wxID"]].append(zdata) 
                         else:
                             ReceiveZC[infosToSave1["wxID"]]=[zdata] 
-                    if(zdata[10]==0):
-                        CountSummary["Np"]+=1
-                        payAmountJS-=1*priceP
-                        payLoad+=f"\n——{ziD}:Z{str(priceP)}  "
-                        remark="未关注" 
-                        NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ziD,"评",remark,infosToSave1["content"]))                            
+                        if(zdata[10]==0):
+                            CountSummary["Np"]+=1
+                            payAmountJS-=1*priceP
+                            payLoad+=f"\n——{ziD}:Z{str(priceP)}  "
+                            remark="未关注" 
+                            NotReceiveZC.append((infosToSave1["MarkID"],infosToSave1["wxID"],ziD,"评",remark,infosToSave1["content"]))                            
                 for ddd in widl: 
                     if(ddd not in findedxhs and "小红薯"+ddd not in findedxhs and "用户"+ddd not in findedxhs):
                         CountSummary["Np"]+=1

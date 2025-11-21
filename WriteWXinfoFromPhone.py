@@ -1,17 +1,57 @@
-import xlwings as xw
-import uiautomator2 as u2
-import time
+import uiautomator2 as u2 
 import logging
 import sqlite3 
-import random
-import sys
+import datetime
 import re
-from datetime import datetime
-import os
+from datetime import datetime 
 #从手机中获取他们发的信息插入到数据库中
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+from datetime import datetime, timedelta
+import re
 
+from datetime import datetime, timedelta
+import re
+
+def process_time(input_time: str) -> str:
+    """
+    处理输入时间：纯时间格式补充前一天日期（当前年份+前一天月日），日期+时间格式转换为年/月/日格式
+    :param input_time: 输入时间字符串（支持两种格式："HH:MM:SS" 或 "MM月DD日 HH:MM:SS"）
+    :return: 处理后的时间字符串（格式："YYYY/MM/DD HH:MM:SS"，年为当前系统年份）
+    :raises ValueError: 输入格式不支持时抛出异常
+    """
+    # 定义两种格式的正则表达式
+    time_only_pattern = r'^(\d{2}):(\d{2}):(\d{2})$'  # 纯时间：HH:MM:SS
+    date_time_pattern = r'^(\d{1,2})月(\d{1,2})日\s+(\d{2}):(\d{2}):(\d{2})$'  # 日期+时间：MM月DD日 HH:MM:SS
+
+    # 获取当前年份（核心：统一使用当前系统的年）
+    current_year = datetime.now().year
+
+    # 匹配纯时间格式（无日期）
+    time_match = re.match(time_only_pattern, input_time.strip())
+    if time_match:
+        # 获取当前日期，并减去1天（前一天）
+        yesterday = datetime.now().date() - timedelta(days=1)
+        # 格式化为 "YYYY/MM/DD"（年为当前年，月日为前一天）
+        date_str = yesterday.strftime(f"{current_year}-%m-%d")
+        return f"{date_str} {input_time.strip()}"
+
+    # 匹配日期+时间格式（转换为 YYYY/MM/DD 格式）
+    date_time_match = re.match(date_time_pattern, input_time.strip())
+    if date_time_match:
+        # 提取月、日、时间部分
+        month = int(date_time_match.group(1))
+        day = int(date_time_match.group(2))
+        time_part = f"{date_time_match.group(3)}:{date_time_match.group(4)}:{date_time_match.group(5)}"
+        # 格式化为 "YYYY/MM/DD HH:MM:SS"（补零确保两位数月日）
+        date_str = f"{current_year}-{month:02d}-{day:02d}"
+        return f"{date_str} {time_part}"
+
+    # 既不匹配纯时间，也不匹配日期+时间 → 抛出异常
+    raise ValueError(
+        f"不支持的时间格式：{input_time}\n"
+        f"支持格式：\n1. 纯时间（如：11:39:58）\n2. 日期+时间（如：11月11日 2:49:58）"
+    )
 class WechatVersion:
     def __init__(self, version):
         """初始化微信版本检查"""
@@ -29,37 +69,7 @@ class WechatVersion:
             self.Content="com.tencent.mm:id/lp8"#用户发的信息
             self.Time="com.tencent.mm:id/lp_"#发信息时间
             self.ControlList="com.tencent.mm:id/lpg"#可滚动的信息控件
-class WeChatDonation:
-    def __init__(self, excel_path, password=None,startindex=0,versionWC=WechatVersion("8.0.42")):
-        """初始化赞赏助手，加载Excel数据"""
-        self.excel_path = excel_path
-        self.password = password  # 支付密码，如需要  
-        self.d = None  # uiautomator2设备对象
-        self.startindex=startindex
-        self.OBJWC=versionWC
- 
-    def connect_device(self):
-        """连接Android设备"""
-        try:
-            self.d = u2.connect()  # 连接默认设备
-
-            logger.info(f"已连接设备: {self.d.device_info}")
-            return True
-        except Exception as e:
-            logger.error(f"连接设备失败: {str(e)}")
-            return False
-    
-    def open_wechat(self):
-        """打开微信应用"""
-        try:
-            self.d.app_start("com.tencent.mm")
-            logger.info("正在打开微信...")
-            time.sleep(3)  # 等待微信启动
-            return True
-        except Exception as e:
-            logger.error(f"打开微信失败: {str(e)}")
-            return False
-    
+  
 def extract_and_convert_time(input_str):
     # 使用正则表达式提取日期时间部分（匹配类似2025_10_16_09_17_09的格式）
     match = re.search(r'(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2})', input_str)
@@ -75,41 +85,34 @@ def extract_and_convert_time(input_str):
     
     # 格式化为目标格式（年.月.日 时:分:秒）
     return dt
-def get_all_filenames(directory):
-    # 检查目录是否存在
-    if not os.path.exists(directory):
-        raise FileNotFoundError(f"目录不存在: {directory}")
-    
-    if not os.path.isdir(directory):
-        raise NotADirectoryError(f"{directory} 不是一个目录")
-    
-    # 获取目录下的所有文件和子目录
-    all_entries = os.listdir(directory)
-    
-    # 筛选出文件（排除目录） 
-    lastestPath=None
-    lastest_time=datetime(2001, 1, 1,1,1,1)
-    for entry in all_entries:
-        entry_path = os.path.join(directory, entry)
-        if os.path.isfile(entry_path):
-            filenameTime=extract_and_convert_time(entry)
-            if(filenameTime>lastest_time):#只处理未来的文件
-                lastest_time=filenameTime
-                lastestPath=entry_path   
-    return lastestPath
 if __name__ == "__main__":
- 
-    # Excel文件路径，确保文件存在且格式正确
-    excel_path = get_all_filenames("E:/my/job/xhs/Result" ) #    excel_path = "E:/my/job/xhs/Result/结算(23-23)2025_06_24_09_43_20.xls"  
-    startindex=2-2        #excel表格的行号-2
+  
     versionWC=WechatVersion("8.0.42") #微信版本号
-    d = u2.connect() # 连接多台设备需要指定设备序列号
-    toinsertInfo=[]
+    d = u2.connect() # 连接多台设备需要指定设备序列号 
     toinsertInfo1=[]
     cachesenders=[""]
     cachetimes=[""]
     cachecontents=[""]
     allin=False
+    findtop=False
+    tempValue=[]
+    while(findtop==False):
+        d(resourceId=versionWC.ControlList).swipe("down",10) 
+        controlHoles=d(resourceId=versionWC.ControlHole)
+        user33= controlHoles[0].child(resourceId=versionWC.User)[0].get_text()
+        time33= controlHoles[0].child(resourceId=versionWC.Time)[0].get_text()
+        content33=controlHoles[0].child(resourceId=versionWC.Content)[0].get_text()
+        if(len(tempValue)==0):
+            tempValue.append((user33,time33,content33))
+        else:
+            if(tempValue[0][0]==user33 and tempValue[0][1]==time33 and tempValue[0][2]==content33):
+                tempValue.append((user33,time33,content33))
+            else:
+                tempValue.clear()
+                tempValue.append((user33,time33,content33))
+        if(len(tempValue)==4):
+            findtop=True
+
     while(allin==False):
         allin=True
         controlHoles=d(resourceId=versionWC.ControlHole)
@@ -123,7 +126,7 @@ if __name__ == "__main__":
             if(user33.exists):
                 sender=user33[0].get_text()
             if(time33.exists):
-                timeh=time33[0].get_text()
+                timeh=process_time(time33[0].get_text())
             if(content33.exists):
                 contenth=content33[0].get_text()
             find=False
@@ -135,83 +138,17 @@ if __name__ == "__main__":
                         break 
 
             if(find1==False and contenth!=""):
-                toinsertInfo1.append((sender,"[聊天记录]" ,'text',contenth,timeh))
+                toinsertInfo1.append((sender,"[聊天]" ,'text',contenth,timeh,datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
                 allin=False
-
-
-
-
-        #     for index,times in enumerate(cachetimes):
-        #         if(timeh==times):
-        #             if(cachesenders[index]==sender   ):
-        #                 if((index<len(cachecontents) and cachecontents[index]==contenth)):
-        #                     find=True
-        #                     break
-                
-
-        #     if(find):
-        #         continue
-        #     else:
-        #         allin=False
-        #         if(sender!="" and cachesenders[-1]!=sender):
-        #             cachesenders.append(sender)
-        #         if(timeh!="" and cachetimes[-1]!=timeh):
-        #             cachetimes.append(timeh )
-        #         if(contenth!="" and cachecontents[-1]!=contenth):
-        #             cachecontents.append(contenth)
-
-        # # users= d(resourceId=versionWC.User)
-        # # times= d(resourceId=versionWC.Time)
-        # # contents= d(resourceId=versionWC.Content)
-        # # for i in range(0,users.count):
-        # #     sender=users[i].get_text()
-        # #     if(sender not in cachesenders):
-        # #         cachesenders.append(sender)
-        # #         allin=False
-        # # for i in range(0,times.count):
-        # #     sender=times[i].get_text()
-        # #     if(sender not in cachetimes):
-        # #         cachetimes.append(sender)
-        # #         allin=False
-        # # for i in range(0,contents.count):
-        # #     sender=contents[i].get_text()
-        # #     if(sender not in cachecontents):
-        # #         cachecontents.append(sender)
-        # #         allin=False 
-        d(resourceId=versionWC.ControlList).swipe("up",20)
-        #
-    for index,timeh in enumerate(cachetimes):
-         toinsertInfo.append((cachesenders[index],"[聊天记录]" ,'text',cachecontents[index],cachetimes[index]))
+ 
+        d(resourceId=versionWC.ControlList).swipe("up",20) 
+ 
     conn = sqlite3.connect('config\\WorkData.db')
     cursorsql = conn.cursor()
-    insert_single_sql = '''INSERT INTO WXMSG (sender,myType,type,content,time)
-     VALUES (?, ?,?,?,?)'''      
-    cursorsql.executemany(insert_single_sql, toinsertInfo)
-    # # 定义插入多条数据的 SQL 语句
-    # insert_multiple_sql = "INSERT INTO users (name, age) VALUES (?, ?)"
-    # # 要插入的多条数据
-    # data = [
-    #     ('Bob', 30),
-    #     ('Charlie', 35)
-    # ]
-    # # 批量插入数据
-    # cursor.executemany(insert_multiple_sql, data)
-
+    insert_single_sql = '''INSERT INTO WXMSG (sender,myType,type,content,time,HandleDate)
+     VALUES (?, ?,?,?,?,?)'''      
+    cursorsql.executemany(insert_single_sql, toinsertInfo1)
     # 提交事务，将更改保存到数据库
     conn.commit()   
-    select_sql = "SELECT id,sender,myType,type,content,time FROM WXMSG WHERE" 
-    cursorsql.execute(select_sql)
-    # 获取所有查询结果
-    dataNode2 = cursorsql.fetchall()  
-    # 授予存储权限
-    d.shell("pm grant com.github.uiautomator android.permission.WRITE_EXTERNAL_STORAGE")
-    d.shell("pm grant com.github.uiautomator android.permission.READ_EXTERNAL_STORAGE") 
     print(d.info)
-    # 创建支付助手实例
-    donation = WeChatDonation(excel_path, password="705464",startindex=startindex,versionWC=versionWC)  # 替换为实际支付密码或留空
-    try:
-    # 执行支付
-        donation.process_payments()
-    except Exception as e:
-        logger.error(f"支付过程中发生错误: {str(e)}")
-        sys.exit(1)
+ 
