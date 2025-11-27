@@ -997,7 +997,7 @@ if __name__ == '__main__':
             if(infosToSave1["IsC"]>0): 
                 dataNodeDZ1FailedXHSID=  GetXHSID(dataNodeDZ1Failed,"收藏")
                 for zdata in CListConfirm:
-                    ziD=zdata[3].replace(" ", "").lower()
+                    ziD=zdata[3].replace(" ", "").replace("，","").replace(" ","").lower()#从小红书里面取出的小红书号
                     if(ziD in widl or ziD.replace("小红薯","")   in widl or ziD.replace("用户","") in widl):#if(ziD in wid or wid in ziD): 
                         findedxhs.append(ziD) 
                         if(infosToSave1["wxID"] in ReceiveZC ): 
@@ -1031,7 +1031,7 @@ if __name__ == '__main__':
             if(infosToSave1["IsP"]>0):
                 dataNodeDZ1FailedXHSID=  GetXHSID(dataNodeDZ1Failed,"评论")
                 for zdata in OtherListConfirm:
-                    ziD=zdata[3].replace(" ", "").lower()
+                    ziD=zdata[3].replace(" ", "").replace("，","").replace(" ","").lower()#从小红书里面取出的小红书号
                     if(ziD in widl or ziD.replace("小红薯","") in widl or ziD.replace("用户","") in widl):#if(ziD in wid or wid in ziD): 
                         findedxhs.append(ziD) 
                         if(infosToSave1["wxID"] in ReceiveZC ): 

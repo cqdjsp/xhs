@@ -3,6 +3,7 @@ import logging
 import sqlite3 
 import datetime
 import re
+import time
 from datetime import datetime 
 #从手机中获取他们发的信息插入到数据库中
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -96,6 +97,7 @@ if __name__ == "__main__":
     allin=False
     findtop=False
     tempValue=[]
+    #----------------------找到聊天记录的最顶部---------------------------
     while(findtop==False):
         d(resourceId=versionWC.ControlList).swipe("down",10) 
         controlHoles=d(resourceId=versionWC.ControlHole)
@@ -112,9 +114,11 @@ if __name__ == "__main__":
                 tempValue.append((user33,time33,content33))
         if(len(tempValue)==4):
             findtop=True
-
+    #---------------------
+    CFData=[]
     while(allin==False):
         allin=True
+        time.sleep(3)
         controlHoles=d(resourceId=versionWC.ControlHole)
         for i in range(0,controlHoles.count):
             user33= controlHoles[i].child(resourceId=versionWC.User)
@@ -123,17 +127,21 @@ if __name__ == "__main__":
             contenth=""
             sender=""
             timeh=""
-            if(user33.exists):
+            parentBounds=controlHoles[i].bounds()
+            if(user33.exists and user33[0].bounds()[1]>=parentBounds[1] and user33[0].bounds()[3]<=parentBounds[3]):
                 sender=user33[0].get_text()
-            if(time33.exists):
+            if(time33.exists and time33[0].bounds()[1]>=parentBounds[1] and time33[0].bounds()[3]<=parentBounds[3]):
                 timeh=process_time(time33[0].get_text())
-            if(content33.exists):
+            if(content33.exists  and content33[0].bounds()[1]>=parentBounds[1] and content33[0].bounds()[3]<=parentBounds[3]):
                 contenth=content33[0].get_text()
             find=False
             find1=False
             for valueO in toinsertInfo1:
                 if(contenth!=""):
                     if( valueO[3]==contenth):
+                        if(valueO[3]==contenth and timeh!='' and valueO[4]!=timeh):
+                            CFData.append((sender,timeh,contenth))
+                            print(f"找到重复的数据 {timeh},{sender},{contenth}")
                         find1=True
                         break 
 
