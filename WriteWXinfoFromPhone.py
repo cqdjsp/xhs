@@ -63,13 +63,14 @@ class WechatVersion:
         self.Time="com.tencent.mm:id/lp_"#发信息时间
         self.ControlList="com.tencent.mm:id/lpg"#可滚动的信息控件
         self.ControlHole="com.tencent.mm:id/lp6"#用户，事件，信息所在的父控件
-       
+        self.ZFContent="com.tencent.mm:id/cu2"#转发的内容
 
         if(version=="8.0.54"):
             self.User="com.tencent.mm:id/lpa"#用户 
             self.Content="com.tencent.mm:id/lp8"#用户发的信息
             self.Time="com.tencent.mm:id/lp_"#发信息时间
             self.ControlList="com.tencent.mm:id/lpg"#可滚动的信息控件
+            self.ZFContent="com.tencent.mm:id/cu2"#转发的内容
   
 def extract_and_convert_time(input_str):
     # 使用正则表达式提取日期时间部分（匹配类似2025_10_16_09_17_09的格式）
@@ -128,12 +129,25 @@ if __name__ == "__main__":
             sender=""
             timeh=""
             parentBounds=controlHoles[i].bounds()
-            if(user33.exists and user33[0].bounds()[1]>=parentBounds[1] and user33[0].bounds()[3]<=parentBounds[3]):
-                sender=user33[0].get_text()
-            if(time33.exists and time33[0].bounds()[1]>=parentBounds[1] and time33[0].bounds()[3]<=parentBounds[3]):
-                timeh=process_time(time33[0].get_text())
-            if(content33.exists  and content33[0].bounds()[1]>=parentBounds[1] and content33[0].bounds()[3]<=parentBounds[3]):
-                contenth=content33[0].get_text()
+            if(user33.exists):
+                bou=user33[0].bounds()
+                if(bou[1]>=parentBounds[1] and bou[3]<=parentBounds[3]):
+                    sender=user33[0].get_text()
+            if(time33.exists   ):
+                bou=user33[0].bounds()
+                if(bou[1]>=parentBounds[1] and bou[3]<=parentBounds[3]): 
+                    timeh=process_time(time33[0].get_text())
+            if(content33.exists):
+                bou=content33[0].bounds()
+                if(bou[1]>=parentBounds[1] and bou[3]<=parentBounds[3]): 
+                    contenth=content33[0].get_text()
+                    if(contenth==""):
+                        content33=controlHoles[i].child(resourceId=versionWC.ZFContent)
+                        if(content33.exists):
+                            bou=content33[0].bounds()
+                            if(bou[1]>=parentBounds[1] and bou[3]<=parentBounds[3]): 
+                                contenth=content33[0].get_text().split(sender)[1]+"@姜可艾 没有结算完"
+                                contenth=contenth.replace(":","")
             find=False
             find1=False
             for valueO in toinsertInfo1:

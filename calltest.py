@@ -252,21 +252,28 @@ def InsertNoteHandleTocache( datas):
             currentHandleDate=notehandletime.date()
             noteid=[id for id in NodeTexts if id[1]==data["篇"]][0]
             key=noteid#data["篇"]+data["操作类型"]
+            msg=""
+            isTooMore=False
             if( key not in countDT): 
                 countDT[key]=[0,0,0] 
             if(data["操作类型"]=="赞"):
                 countDT[key][0]+=1
+                if countDT[key][0]>32:
+                    isTooMore=True
             elif(data["操作类型"]=="收藏"):
                 countDT[key][1]+=1
+                if countDT[key][1]>32:
+                    isTooMore=True
             elif(data["操作类型"]=="评论"):
                 countDT[key][2]+=1   
             datanode=[datac for datac in NodeTexts if datac[1]==data["篇"] ][0]        
-            if((countDT[key][0]>32 or countDT[key][1]>32) and currentHandleDate in endtimes and  datetime.datetime.strptime(datanode[7], "%Y-%m-%d %H:%M:%S").date()==currentHandleDate):
-                status=0            
+            if( isTooMore and currentHandleDate in endtimes and  datetime.datetime.strptime(datanode[7], "%Y-%m-%d %H:%M:%S").date()==currentHandleDate):
+                status=0
+                msg="超32个了"           
 #-------------------------------------------------------------------------------处理重复操作了的数据--------------------------------------------------
             if(len([dataC for dataC in toinsert  if dataC[0]==data["篇"] and dataC[1]==data["操作人ID"] and dataC[4]==data["操作类型"]])>0):
                 status=0
-                print(f'******{data["操作人昵称"]} 对篇{data["篇"]} 操作重复了{data["操作类型"]}')
+                msg+="，重复了"
 #-----------------------------------------------------------------------------处理只要点赞或者收藏等不要全部的情况;处理某个时间后不再收赞或藏或评了--------------------------------------
             for i,ele in enumerate(noteToCal):
                 if data["篇"]==ele:
@@ -275,23 +282,29 @@ def InsertNoteHandleTocache( datas):
                         if  data["操作类型"]=="赞":
                             if noteToCalDetail[i][0]!="1":
                                 status=0
+                                msg+="，不需要赞"
                             if(notehandletime>datetime.datetime.strptime(notetimeNoList[0], "%Y/%m/%d %H:%M:%S")):
                                 status=0
+                                msg+="，过期赞"
                         elif data["操作类型"]=="收藏":
                             if noteToCalDetail[i][1]!="1":
-                                status=0
+                                status=0                                
+                                msg+="，不需要藏"
                             if(notehandletime>datetime.datetime.strptime(notetimeNoList[1], "%Y/%m/%d %H:%M:%S")):
                                 status=0
+                                msg+="，过期藏"
                         elif data["操作类型"]=="评论":
                             if noteToCalDetail[i][2]!="1":
                                 status=0
+                                msg+="，不需要评"
                             if(notehandletime>datetime.datetime.strptime(notetimeNoList[2], "%Y/%m/%d %H:%M:%S")):
                                 status=0
+                                msg+="，过期评"
                     except Exception as ex:
                         print(ex)
                         traceback.print_exc()                        
                 if(status==0):    
-                    print(f'******{data["操作人昵称"]} 对篇{data["篇"]} 操作 {data["操作类型"]} 不和要求')
+                    print(f'******{data["操作人昵称"]} 对笔记{data["篇"]} 操作 {data["操作类型"]} ： {msg}')
                     break
 #-----------------------------------------------------------------------------处理没有在要处理的篇列表中的数据--------------------------------------
             if( data["篇"] not in  noteToCal ):

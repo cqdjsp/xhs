@@ -427,11 +427,14 @@ def GetNodeTextInfo(parameter):
     if(UseInEncry==True):
         dataNode=[ [xor_encrypt_decrypt(datain) if isinstance(datain,int)==False else datain for datain in data ] for data in dataNode]
     return dataNode
-def GetNodeHandleInfo():
-    select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime,fans FROM NodeHandleInfo " #where noteID='6857aa580000000012033ce3' and handleType in ('收藏')
+def GetNodeHandleInfo(noteIDs): 
+    today = datetime.date.today().strftime("%Y-%m-%d")
+    params=[today]
+    select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime,fans FROM NodeHandleInfo where DATE(REPLACE(SUBSTR(addtime, 1, 10), '_', '-')) = ? and  noteID IN ({})".format(", ".join(["?"] * len(noteIDs))) #where noteID='6857aa580000000012033ce3' and handleType in ('收藏')
     if(UseInEncry==True):
-        select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime,fans FROM NodeHandleInfoEncry " 
-    cursorsql.execute(select_sql)
+        select_sql = "SELECT ID,noteID,handleUserID,handleUserName,handleUserImage,handleType,handleTime,mentionContent,status,addtime,fans FROM NodeHandleInfoEncry where DATE(REPLACE(SUBSTR(addtime, 1, 10), '_', '-')) = ? and  noteID IN ({})".format(", ".join(["?"] * len(noteIDs))) 
+    params.extend(noteIDs) 
+    cursorsql.execute(select_sql,params)
     # 获取所有查询结果
     dataNode = cursorsql.fetchall()    
     if(UseInEncry==True):  
@@ -636,7 +639,7 @@ if __name__ == '__main__':
                 insertedMarkID.append(info["wxID"])
 #---------------------------获取真实点赞的数据---------------------------
         
-        dataNodeDZ1 = GetNodeHandleInfo() # 获取所有查询结果
+        dataNodeDZ1 = GetNodeHandleInfo(noteToCal) # 获取所有查询结果
         dataNodeDZ1Failed=[]#status为0的，但是已经点上的数据，为0是因为不符合要求，如只要10个，那第11个就是0，不接受了
         ZListConfirm=[]#小红书里面实际点赞成功的
         CListConfirm=[]#小红书里面实际收藏成功的
@@ -646,6 +649,8 @@ if __name__ == '__main__':
         #由于可能有的要二次支付，如msc改为支付2元一个赞，所以需要第二次修改config，单独找出msc做的，再支付一遍，而calltest插入数据库中，可能还包含了其他的篇的status也为1
         for  DZ1 in dataNodeDZ1: 
             newstatus=DZ1[8]
+            time1=datetime.datetime.strptime(DZ1[6], "%Y-%m-%d %H:%M:%S") 
+            
             if(DZ1[8]==1 ):
                 if(DZ1[1] in noteToCal):
                     # if(DZ1[10]==0): 
@@ -653,25 +658,28 @@ if __name__ == '__main__':
                     for i,ele in enumerate(noteToCal):
                         if DZ1[1]==ele: 
                             try:
+                                mes="不需要"
                                 if  DZ1[5]=="赞":
                                     if noteToCalDetail[i][0]!="1":
                                         newstatus=0 
+                                        mes+="赞"
                                 elif DZ1[5]=="收藏":
                                     if noteToCalDetail[i][1]!="1":
                                         newstatus=0 
+                                        mes+="收藏"
                                 elif DZ1[5]=="评论":
                                     if noteToCalDetail[i][2]!="1":
                                         newstatus=0 
+                                        mes+="评论"
                             except Exception as ex:
                                 print(ex)
                                 traceback.print_exc()                        
-                        if(newstatus==0):    
+                        if(newstatus==0 and time1.date() in DZDay):    
                             print(f'******{DZ1[2]} 对篇{DZ1[1]} 操作 {DZ1[5]} 不和要求')
                             break
                 else:
                     continue 
 
-            time1=datetime.datetime.strptime(DZ1[6], "%Y-%m-%d %H:%M:%S") 
             if(time1.date() in DZDay):
                 if(newstatus==0):
                     dataNodeDZ1Failed.append(DZ1)
