@@ -462,7 +462,7 @@ if __name__ == '__main__':
         StartText=""#"昨天 21:15"# "2025年5月30日 3:14"#"0:25"#"2025年4月25日 5:48" 如果是None会根据配置自动找到开始统计的地方
         breakText=None#"0:12"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44 如果是None会根据配置自动找到结束统计的地方
         DZDay=endtimes#点赞收藏的哪天
-        priceZ=1
+        priceZ=0.5
         priceC=0.5
         priceP=0.5    
         conn = sqlite3.connect('config\\WorkData.db')
@@ -891,7 +891,7 @@ if __name__ == '__main__':
                 if(len(resultCF)>0):
                     print(f'！！！！{wxname} 与 {",".join(resultCF)} 重复了 {xhsid[3]}')
                 if(xhsid[10]==0):
-                    print(f'！！！！{wxname} 做{xhsid[5]}的账号 {xhsid[3]} 没有关注，麻烦关注一下，再做数据')
+                    print(f'！！！！{wxname} 做{xhsid[5]}的账号 {xhsid[3]} 没有关注，麻烦关注一下，再做数据，关注后补结')
         
         
         for txml in toInsertXML: 
