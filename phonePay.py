@@ -17,7 +17,7 @@ class WechatVersion:
         """初始化微信版本检查"""
         self.version = version 
         #默认版本为8.0.42
-        self.Plus="com.tencent.mm:id/ky9"#加号按钮 
+        self.Plus="com.tencent.mm:id/jga"#加号按钮 
         self.Picture="com.tencent.mm:id/hnn"#相册按钮
         self.SelectPicture="com.tencent.mm:id/je0"#选择图片按钮
         self.AmountInput="com.tencent.mm:id/pbn"#金额输入框

@@ -13,45 +13,68 @@ import re
 
 from datetime import datetime, timedelta
 import re
-
+ 
 def process_time(input_time: str) -> str:
     """
-    处理输入时间：纯时间格式补充前一天日期（当前年份+前一天月日），日期+时间格式转换为年/月/日格式
-    :param input_time: 输入时间字符串（支持两种格式："HH:MM:SS" 或 "MM月DD日 HH:MM:SS"）
-    :return: 处理后的时间字符串（格式："YYYY/MM/DD HH:MM:SS"，年为当前系统年份）
+    处理输入时间：
+    1. 纯时间格式（HH:MM:SS）→ 补充前一天日期（当前年份+前一天月日），格式 YYYY/MM/DD HH:MM:SS
+    2. 无年份日期+时间（MM月DD日 HH:MM:SS）→ 补充当前年份，格式 YYYY/MM/DD HH:MM:SS
+    3. 带年份日期+时间（YYYY年MM月DD日 HH:MM:SS）→ 直接转换为 YYYY/MM/DD HH:MM:SS
+    :param input_time: 输入时间字符串（支持三种格式）
+    :return: 处理后的时间字符串（格式："YYYY/MM/DD HH:MM:SS"）
     :raises ValueError: 输入格式不支持时抛出异常
     """
-    # 定义两种格式的正则表达式
-    time_only_pattern = r'^(\d{2}):(\d{2}):(\d{2})$'  # 纯时间：HH:MM:SS
-    date_time_pattern = r'^(\d{1,2})月(\d{1,2})日\s+(\d{2}):(\d{2}):(\d{2})$'  # 日期+时间：MM月DD日 HH:MM:SS
+    # 定义三种格式的正则表达式
+    # 1. 纯时间：HH:MM:SS（如 00:12:30）
+    time_only_pattern = r'^(\d{1,2}):(\d{2}):(\d{2})$'
+    # 2. 无年份日期+时间：MM月DD日 HH:MM:SS（如 12月30日 00:12:30）
+    date_time_no_year_pattern = r'^(\d{1,2})月(\d{1,2})日\s+(\d{1,2}):(\d{2}):(\d{2})$'
+    # 3. 带年份日期+时间：YYYY年MM月DD日 HH:MM:SS（如 2025年12月30日 00:12:30）
+    date_time_with_year_pattern = r'^(\d{4})年(\d{1,2})月(\d{1,2})日\s+(\d{1,2}):(\d{2}):(\d{2})$'
 
-    # 获取当前年份（核心：统一使用当前系统的年）
+    # 去除首尾空格，统一处理
+    input_clean = input_time.strip()
     current_year = datetime.now().year
 
-    # 匹配纯时间格式（无日期）
-    time_match = re.match(time_only_pattern, input_time.strip())
+    # 匹配1：纯时间格式（补充前一天日期）
+    time_match = re.match(time_only_pattern, input_clean)
     if time_match:
-        # 获取当前日期，并减去1天（前一天）
         yesterday = datetime.now().date() - timedelta(days=1)
-        # 格式化为 "YYYY/MM/DD"（年为当前年，月日为前一天）
         date_str = yesterday.strftime(f"{current_year}-%m-%d")
-        return f"{date_str} {input_time.strip()}"
+        # 补零确保时间部分为两位数（如 1:2:3 → 01:02:03）
+        h, m, s = time_match.groups()
+        time_part = f"{h.zfill(2)}:{m.zfill(2)}:{s.zfill(2)}"
+        return f"{date_str} {time_part}"
 
-    # 匹配日期+时间格式（转换为 YYYY/MM/DD 格式）
-    date_time_match = re.match(date_time_pattern, input_time.strip())
-    if date_time_match:
-        # 提取月、日、时间部分
-        month = int(date_time_match.group(1))
-        day = int(date_time_match.group(2))
-        time_part = f"{date_time_match.group(3)}:{date_time_match.group(4)}:{date_time_match.group(5)}"
-        # 格式化为 "YYYY/MM/DD HH:MM:SS"（补零确保两位数月日）
+    # 匹配2：带年份的日期+时间格式（直接转换）
+    year_date_time_match = re.match(date_time_with_year_pattern, input_clean)
+    if year_date_time_match:
+        year, month, day, h, m, s = year_date_time_match.groups()
+        # 补零确保月、日、时为两位数
+        year = int(year)
+        month = int(month)
+        day = int(day)
+        time_part = f"{h.zfill(2)}:{m.zfill(2)}:{s.zfill(2)}"
+        date_str = f"{year}-{month:02d}-{day:02d}"
+        return f"{date_str} {time_part}"
+
+    # 匹配3：无年份的日期+时间格式（补充当前年份）
+    no_year_date_time_match = re.match(date_time_no_year_pattern, input_clean)
+    if no_year_date_time_match:
+        month, day, h, m, s = no_year_date_time_match.groups()
+        month = int(month)
+        day = int(day)
+        time_part = f"{h.zfill(2)}:{m.zfill(2)}:{s.zfill(2)}"
         date_str = f"{current_year}-{month:02d}-{day:02d}"
         return f"{date_str} {time_part}"
 
-    # 既不匹配纯时间，也不匹配日期+时间 → 抛出异常
+    # 不匹配任何格式，抛出异常
     raise ValueError(
         f"不支持的时间格式：{input_time}\n"
-        f"支持格式：\n1. 纯时间（如：11:39:58）\n2. 日期+时间（如：11月11日 2:49:58）"
+        f"支持格式：\n"
+        f"1. 纯时间（如：11:39:58）\n"
+        f"2. 无年份日期+时间（如：11月11日 2:49:58）\n"
+        f"3. 带年份日期+时间（如：2025年12月30日 00:12:30）"
     )
 class WechatVersion:
     def __init__(self, version):

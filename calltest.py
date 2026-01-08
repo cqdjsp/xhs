@@ -269,7 +269,7 @@ def InsertNoteHandleTocache( datas):
             datanode=[datac for datac in NodeTexts if datac[1]==data["篇"] ][0]        
             if( isTooMore and currentHandleDate in endtimes and  datetime.datetime.strptime(datanode[7], "%Y-%m-%d %H:%M:%S").date()==currentHandleDate):
                 status=0
-                msg="超32个了"           
+                msg="超30个了"           
 #-------------------------------------------------------------------------------处理重复操作了的数据--------------------------------------------------
             if(len([dataC for dataC in toinsert  if dataC[0]==data["篇"] and dataC[1]==data["操作人ID"] and dataC[4]==data["操作类型"]])>0):
                 status=0
