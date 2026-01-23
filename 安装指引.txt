@@ -8,3 +8,5 @@ pip install Pillow
 pip install comtypes
 pip install pyperclip
 pip install psutil
+
+1.核对有谁取消掉重新做了。2.赞藏评做上了没有。3.做的时间。4.有没有关注。5.自动付款

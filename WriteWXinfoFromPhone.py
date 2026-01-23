@@ -17,26 +17,37 @@ import re
 def process_time(input_time: str) -> str:
     """
     处理输入时间：
-    1. 纯时间格式（HH:MM:SS）→ 补充前一天日期（当前年份+前一天月日），格式 YYYY/MM/DD HH:MM:SS
-    2. 无年份日期+时间（MM月DD日 HH:MM:SS）→ 补充当前年份，格式 YYYY/MM/DD HH:MM:SS
-    3. 带年份日期+时间（YYYY年MM月DD日 HH:MM:SS）→ 直接转换为 YYYY/MM/DD HH:MM:SS
-    :param input_time: 输入时间字符串（支持三种格式）
-    :return: 处理后的时间字符串（格式："YYYY/MM/DD HH:MM:SS"）
+    1. 纯时间格式（HH:MM）→ 补充秒数为00，再补充前一天日期，格式 YYYY-MM-DD HH:MM:SS
+    2. 纯时间格式（HH:MM:SS）→ 补充前一天日期，格式 YYYY-MM-DD HH:MM:SS
+    3. 无年份日期+时间（MM月DD日 HH:MM:SS）→ 补充当前年份，格式 YYYY-MM-DD HH:MM:SS
+    4. 带年份日期+时间（YYYY年MM月DD日 HH:MM:SS）→ 直接转换为 YYYY-MM-DD HH:MM:SS
+    :param input_time: 输入时间字符串（支持四种格式）
+    :return: 处理后的时间字符串（格式："YYYY-MM-DD HH:MM:SS"）
     :raises ValueError: 输入格式不支持时抛出异常
     """
-    # 定义三种格式的正则表达式
-    # 1. 纯时间：HH:MM:SS（如 00:12:30）
+    # 定义四种格式的正则表达式
+    # 1. 纯时间：HH:MM（如 03:26）
+    time_hhmm_pattern = r'^(\d{1,2}):(\d{2})$'
+    # 2. 纯时间：HH:MM:SS（如 00:12:30）
     time_only_pattern = r'^(\d{1,2}):(\d{2}):(\d{2})$'
-    # 2. 无年份日期+时间：MM月DD日 HH:MM:SS（如 12月30日 00:12:30）
+    # 3. 无年份日期+时间：MM月DD日 HH:MM:SS（如 12月30日 00:12:30）
     date_time_no_year_pattern = r'^(\d{1,2})月(\d{1,2})日\s+(\d{1,2}):(\d{2}):(\d{2})$'
-    # 3. 带年份日期+时间：YYYY年MM月DD日 HH:MM:SS（如 2025年12月30日 00:12:30）
+    # 4. 带年份日期+时间：YYYY年MM月DD日 HH:MM:SS（如 2025年12月30日 00:12:30）
     date_time_with_year_pattern = r'^(\d{4})年(\d{1,2})月(\d{1,2})日\s+(\d{1,2}):(\d{2}):(\d{2})$'
 
     # 去除首尾空格，统一处理
     input_clean = input_time.strip()
     current_year = datetime.now().year
-
-    # 匹配1：纯时间格式（补充前一天日期）
+    # 匹配1：纯时间格式 HH:MM（补充秒数00和前一天日期）
+    time_hhmm_match = re.match(time_hhmm_pattern, input_clean)
+    if time_hhmm_match:
+        yesterday = datetime.now().date() - timedelta(days=1)
+        date_str = yesterday.strftime(f"{current_year}-%m-%d")  # 保留-分隔符
+        # 补零确保时间部分为两位数，补充秒数00
+        h, m = time_hhmm_match.groups()
+        time_part = f"{h.zfill(2)}:{m.zfill(2)}:00"
+        return f"{date_str} {time_part}"
+    # 匹配2：纯时间格式（补充前一天日期）
     time_match = re.match(time_only_pattern, input_clean)
     if time_match:
         yesterday = datetime.now().date() - timedelta(days=1)
@@ -46,7 +57,7 @@ def process_time(input_time: str) -> str:
         time_part = f"{h.zfill(2)}:{m.zfill(2)}:{s.zfill(2)}"
         return f"{date_str} {time_part}"
 
-    # 匹配2：带年份的日期+时间格式（直接转换）
+    # 匹配3：带年份的日期+时间格式（直接转换）
     year_date_time_match = re.match(date_time_with_year_pattern, input_clean)
     if year_date_time_match:
         year, month, day, h, m, s = year_date_time_match.groups()
@@ -58,7 +69,7 @@ def process_time(input_time: str) -> str:
         date_str = f"{year}-{month:02d}-{day:02d}"
         return f"{date_str} {time_part}"
 
-    # 匹配3：无年份的日期+时间格式（补充当前年份）
+    # 匹配4：无年份的日期+时间格式（补充当前年份）
     no_year_date_time_match = re.match(date_time_no_year_pattern, input_clean)
     if no_year_date_time_match:
         month, day, h, m, s = no_year_date_time_match.groups()
