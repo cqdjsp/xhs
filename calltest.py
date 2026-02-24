@@ -17,7 +17,7 @@ def sign(uri, data=None, a1="", web_session=""):
             with sync_playwright() as playwright:
                 stealth_js_path = "stealth.min.js"
                 chromium = playwright.chromium
-                browser_path = os.path.join(os.getenv('LOCALAPPDATA'), 'ms-playwright', 'chromium-1194', 'chrome-win', 'chrome.exe')
+                browser_path = os.path.join(os.getenv('LOCALAPPDATA'), 'ms-playwright', 'chromium-1208', 'chrome-win64', 'chrome.exe')
                 # 如果一直失败可尝试设置成 False 让其打开浏览器，适当添加 sleep 可查看浏览器状态
                 browser = chromium.launch(executable_path=browser_path,headless=True)
 
@@ -373,7 +373,7 @@ if __name__ == '__main__':
         cursorsql = conn.cursor() 
         print(datetime.datetime.now())
         handleType={'faved/item':'收藏','liked/item':'赞',"comment/comment":'评论评论',"comment/item":'评论'}#"mention/item":'在笔记中@了你''liked/comment':赞了你的评论
-        handleTypePrice={'faved/item':0.5,'liked/item':1,"comment/comment":0,"comment/item":0.5}
+        handleTypePrice={'faved/item':0.5,'liked/item':0.5,"comment/comment":0,"comment/item":0.5}
         fieldnames = ['操作ID','预览图','篇','篇title','作者','操作人ID','操作人昵称','操作人头像','操作类型',  '操作时间','评论内容','价格']
         data =GetInfoBySeq(catchlike,catchMention)
         if len(data)==0:

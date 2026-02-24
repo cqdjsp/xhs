@@ -688,7 +688,7 @@ if __name__ == '__main__':
         StartText=None#"昨天 21:15"# "2025年5月30日 3:14"#"0:25"#"2025年4月25日 5:48" 如果是None会根据配置自动找到开始统计的地方
         breakText=None#"0:12"#"星期二 17:00"#"昨天 9:10" #None#终止查询的时间节点6:44 如果是None会根据配置自动找到结束统计的地方
         DZDay=endtimes#点赞收藏的哪天
-        priceZ=1
+        priceZ=0.5
         priceC=0.5
         priceP=0.5    
         wx = WeChat()

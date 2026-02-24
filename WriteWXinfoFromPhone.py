@@ -30,6 +30,8 @@ def process_time(input_time: str) -> str:
     time_hhmm_pattern = r'^(\d{1,2}):(\d{2})$'
     # 2. 纯时间：HH:MM:SS（如 00:12:30）
     time_only_pattern = r'^(\d{1,2}):(\d{2}):(\d{2})$'
+    # 3. 无年份日期+时间：MM月DD日 HH:MM（新增，如 1月23日 08:29）
+    date_time_no_year_hhmm_pattern = r'^(\d{1,2})月(\d{1,2})日\s+(\d{1,2}):(\d{2})$'
     # 3. 无年份日期+时间：MM月DD日 HH:MM:SS（如 12月30日 00:12:30）
     date_time_no_year_pattern = r'^(\d{1,2})月(\d{1,2})日\s+(\d{1,2}):(\d{2}):(\d{2})$'
     # 4. 带年份日期+时间：YYYY年MM月DD日 HH:MM:SS（如 2025年12月30日 00:12:30）
@@ -56,7 +58,16 @@ def process_time(input_time: str) -> str:
         h, m, s = time_match.groups()
         time_part = f"{h.zfill(2)}:{m.zfill(2)}:{s.zfill(2)}"
         return f"{date_str} {time_part}"
-
+    # 匹配3：无年份日期+时间 HH:MM（新增，补充秒数00和当前年份）
+    date_time_no_year_hhmm_match = re.match(date_time_no_year_hhmm_pattern, input_clean)
+    if date_time_no_year_hhmm_match:
+        month, day, h, m = date_time_no_year_hhmm_match.groups()
+        month = int(month)
+        day = int(day)
+        # 补零+补充秒数00
+        time_part = f"{h.zfill(2)}:{m.zfill(2)}:00"
+        date_str = f"{current_year}-{month:02d}-{day:02d}"
+        return f"{date_str} {time_part}"
     # 匹配3：带年份的日期+时间格式（直接转换）
     year_date_time_match = re.match(date_time_with_year_pattern, input_clean)
     if year_date_time_match:

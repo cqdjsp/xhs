@@ -135,7 +135,7 @@ def FindPayID(infosToSave):
     #                 break  
 if __name__ == '__main__':
     try:     
-        priceZ=1
+        priceZ=0.5
         priceC=0.5
         priceP=0.5    
         wx = WeChat()
