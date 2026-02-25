@@ -8,7 +8,8 @@ pip install Pillow
 pip install comtypes
 pip install pyperclip
 pip install psutil
-
+pip install uiautomator2
+pip install uiautodev
 设置vscode的python环境为3.11
     按下 Ctrl+Shift+P 打开命令面板。
     输入 Python: Select Interpreter 并选择这个选项。
@@ -22,3 +23,15 @@ browser_path = os.path.join(os.getenv('LOCALAPPDATA'), 'ms-playwright', 'chromiu
 
 
 1.核对有谁取消掉重新做了。2.赞藏评做上了没有。3.做的时间。4.有没有关注。5.自动付款
+
+
+使用：
+calltest.py 获取xhs服务器的zcp数据
+WriteWXinfoFromPhone 从手机的转发中获取别人做的数据写到数据库。
+callTest2ByCache  从数据库中数据行程excel表格。
+phonePay.py按照excel进行支付
+
+
+安装hamibot, 2 hamibot开启无障碍服务，保持运行
+
+开启辅助功能中的选中朗读功能（
