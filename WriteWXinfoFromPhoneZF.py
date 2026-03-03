@@ -142,7 +142,7 @@ if __name__ == "__main__":
     cachesenders=[""]
     cachetimes=[""]
     cachecontents=[""]
-    allin=False
+    allin=2
     findtop=False
     tempValue=[]
     #----------------------找到聊天记录的最顶部---------------------------
@@ -168,10 +168,13 @@ if __name__ == "__main__":
     # 分支1：匹配 X分X秒 格式（支持 0分5秒、1分0秒、10分20秒 等）
     # 分支2：匹配 数字+" 格式（支持整数/小数、前后空白）
     pattern = r'^\s*(?:(\d+)分(\d+)秒|(\d+\.?\d*)")\s*$'
-    while(allin==False):
-        allin=True
+    huadong=10#滑动几次后就确认了
+    allin=huadong #向上滑动两次后，所有的内容都已经加进去了那就是到底了
+    while(allin>0):
         time.sleep(3)
         controlHoles=d(resourceId=versionWC.ControlHole)
+        allfind=True #这次获得的页面上的数据都已经加进去了，不需要再加了
+        aSwapContent=[]#一次滑动页面所有的数据
         for i in range(0,controlHoles.count):
             # lp7=controlHoles[i].child(resourceId="com.tencent.mm:id/obc")
             # lp8=content33=controlHoles[i].child(resourceId=versionWC.ZFContent)
@@ -194,9 +197,11 @@ if __name__ == "__main__":
                     timeh=process_time(time33[0].get_text())
             if(content33.exists):
                 bou=content33[0].bounds()
-                if(bou[1]>=parentBounds[1] and bou[3]<=parentBounds[3]): 
+                if(bou[1]>=parentBounds[1] and (bou[3]<=parentBounds[3] or bou[3]-parentBounds[3]<28)): 
                     contenth=content33[0].get_text()
                     if(contenth==""):
+                        if(content33[0].info['contentDescription']=="图片"):
+                            continue
                         content33=controlHoles[i].child(resourceId=versionWC.ZFContent)
                         if(content33.exists):
                             bou=content33[0].bounds()
@@ -210,6 +215,8 @@ if __name__ == "__main__":
                                         messageset=mytempmessage[1]
                                 contenth=messageset+"@姜可艾 没有结算完"
                                 contenth=contenth.replace(":","")
+                    elif("@姜可艾 没有结算完" not in contenth):
+                        continue
             find=False
             find1=False
             for valueO in toinsertInfo1:
@@ -223,9 +230,12 @@ if __name__ == "__main__":
 
             if(find1==False and contenth!=""):
                 toinsertInfo1.append((sender,"[聊天]" ,'text',contenth,timeh,datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-                allin=False
- 
-        d(resourceId=versionWC.ControlList).swipe("up",20) 
+                allfind=False
+        if(allfind==True):
+            allin-=1
+        else:
+            allin=huadong
+        d(resourceId=versionWC.ControlList).swipe("up",30) 
  
     conn = sqlite3.connect('config\\WorkData.db')
     cursorsql = conn.cursor()
