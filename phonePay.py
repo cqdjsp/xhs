@@ -23,7 +23,7 @@ class WechatVersion:
         self.AmountInput="com.tencent.mm:id/pbn"#金额输入框
         self.OtherAmount="com.tencent.mm:id/lgk"#其他金额按钮
         self.ConfirmAmount="com.tencent.mm:id/lfv"#赞赏码确认金额按钮
-        self.PayButton="com.tencent.mm:id/hql"#支付码确认金额按钮付款按钮
+        self.PayButton="com.tencent.mm:id/keyboard_action"#"com.tencent.mm:id/hql"#支付码确认金额按钮付款按钮
         self.ZSperson="com.tencent.mm:id/lfq"#赞赏人姓名
         self.PayPassword="com.tencent.mm:id/tenpay_keyboard_"# # 支付密码键盘 
         self.PaySuccess="com.tencent.mm:id/jla"#不开通指纹支付按钮

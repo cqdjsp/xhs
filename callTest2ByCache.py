@@ -4,6 +4,8 @@
 #3.查小红书的 “按小红书查到的计算”列和“按用户发的然后从小红书查找计算”列对比的结果列“按小红书查到的计算==按用户发的然后从小红书查找计算”结果为false的，看看为什么
 #3.1如果不是true，看是否有不同人但是小红书号名字一样，导致给他多结算了，要按照用户发的结算
 #4.看无支付码sheet，里是不是有人已经发支付码了
+#TODO:输入用户给的id与真实id的关系，查到以后用真实ID去小红书里面确认
+#//abcdefghijklmn_z ：abcdefghijklmnopqrstuv__z   好吃鱼：好吃鱼🐟   春 ：春、
 import xlwings as xw
 import sqlite3 
 import datetime
