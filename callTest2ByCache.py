@@ -418,6 +418,13 @@ def GetNodeTextInfo(parameter):
     if(UseInEncry==False):
         dataNode=[ [xor_encrypt_decrypt(datain) if isinstance(datain,int)==False else datain for datain in data ] for data in dataNode]
     return dataNode
+def GetFixHandleName( ):
+    select_sql = "SELECT ID, UserInputName,  RealName FROM FixHandleName" 
+ 
+    cursorsql.execute(select_sql)
+    # 获取所有查询结果
+    dataNode = cursorsql.fetchall()     
+    return dataNode
 def GetNodeTextInfo(parameter):
     select_sql = "SELECT id,note_id,nickname,title,desc,time,likecount,collectedcount,commentcount,sharecount,image,xsec_token,user_id FROM NodeTextInfo WHERE note_id = ?" 
     if(UseInEncry==True):
@@ -742,13 +749,18 @@ if __name__ == '__main__':
             payAmountJS=payAmount#计算减去没在小红书查到的，有的人发 2组赞藏，不写小红书名字，查不到 #会写入excel表格中的“按用户发的然后从小红书查找计算”
             wid=   infosToSave1["contentAll"].replace("@姜可艾 没有结算完","").replace("赞",",").replace("藏",",").replace("\u2005",",").replace("。",",").replace("（）",",")\
                 .replace("评",",").lower().replace("两组",",").replace("两组赞藏",",").replace("2组",",").replace("2组赞藏",",").replace("，",",").replace("\n",",").replace(" ",",")\
-                .replace('[聊天记录]',",").replace("、","").replace("已自查",",").replace("）",",").replace("（",",").split("引用,,的消息")[0]#.replace(".",",")
+                .replace('[聊天记录]',",").replace("、","").replace("已自查",",").replace("）",",").replace("（",",").replace("(",",").replace(")",",").split("引用,,的消息")[0]#.replace(".",",")
 
+            dataNodeFixHandleName= GetFixHandleName()
             widl=[]#微信里面用户发的自己的小红书号
             for i in  wid.split(","):
                 ddtt=i
+                for fdata in dataNodeFixHandleName:
+                    if(fdata[1].lower() ==ddtt.lower()):
+                        ddtt=fdata[2].replace(" ", "")
+                        break
                 if(ddtt!=""):
-                    ddtt=remove_chars_around_colon(i)
+                    ddtt=remove_chars_around_colon(ddtt)
                 if(ddtt!=""):
                     widl.append(ddtt)
             
@@ -760,6 +772,7 @@ if __name__ == '__main__':
                 CountSummary["列表"+infosToSave1["wxID"]]=[]
                 CountSummary["内容"+infosToSave1["wxID"]]=infosToSave1["contentAll"]+infosToSave1["handletime"]
             CountSummary["列表"+infosToSave1["wxID"]].extend(widl)
+
 
 
             payLoad=f"{','.join(widl)}： {str(infosToSave1['IsZ'])}*{str(priceZ)}+{str(infosToSave1['IsC'])}*{str(priceC)}+{str(infosToSave1['IsP'])}*{str(priceP)}\n"

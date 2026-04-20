@@ -128,7 +128,7 @@ class WeChatDonation:
                     if not self.d(resourceId=self.OBJWC.AmountInput).exists(timeout=5):
                         logger.error("未找到金额输入框")
                         return (False,None)
-                    logger.info("扫描赞赏码成功")
+                   # logger.info("扫描赞赏码成功")
                     userName=self.d(resourceId=self.OBJWC.ZSperson).get_text()  # 获取赞赏人姓名
                     #self.d(resourceId=self.OBJWC.liuyan).set_text(str("代结:艾,(%s)%s" % (self.handleDate,self.actualDo)))  
                     time.sleep(random.uniform(0.3, 0.5))  
@@ -137,12 +137,12 @@ class WeChatDonation:
                     if not self.d(resourceId=self.OBJWC. ConfirmAmount).exists(timeout=2):
                         d.swipe_ext("up", scale=0.5)
                     time.sleep(random.uniform(0.3, 0.5))
-                    logger.info("输入金额成功")    
+                   # logger.info("输入金额成功")    
                     if not self.d(resourceId=self.OBJWC. ConfirmAmount).exists(timeout=1):
                         logger.error("未找到确认金额按钮")
                         return (False,None)                   
                     self.d(resourceId=self.OBJWC. ConfirmAmount).click() 
-                    logger.info("点击赞赏成功") 
+                    #logger.info("点击赞赏成功") 
             else:#支付码
                 isZan=False
                 try:
@@ -155,11 +155,11 @@ class WeChatDonation:
                     # 输入金额
                     self.d(resourceId=self.OBJWC.AmountInput).set_text(str(amount))
                     time.sleep(random.uniform(0.3, 0.5))
-                    logger.info("输入金额成功")
+                    #logger.info("输入金额成功")
                     # 点击"确定"按钮
                     self.d(resourceId=self.OBJWC.PayButton).click()
                     time.sleep(random.uniform(0.3, 0.5))
-                    logger.info("点击付款成功")
+                    #logger.info("点击付款成功")
                      
                 except Exception as e:
                     logger.error(f"输入金额失败: {str(e)}")
@@ -184,8 +184,8 @@ class WeChatDonation:
             else:
                 if   self.d(text="识别并支付").exists(timeout=2):
                     self.d(text="识别并支付").click()
-                if not self.d(text="请输入支付密码").exists(timeout=3):
-                    logger.error("未找到请输入支付密码提示")
+                # if not self.d(text="请输入支付密码").exists(timeout=3):
+                #     logger.error("未找到请输入支付密码提示")
                       
                 logger.info(f"正在处理支付给{row[0]}的支付{amount}元")
                 textviews = d.xpath('//android.widget.TextView').all()
@@ -312,7 +312,7 @@ def upload_image(d, local_path, device_path):
         d.push(local_path, device_path)
         d.shell(f"chmod 664 {device_path}")
         d.shell(f"am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://{device_path}")
-        logger.info(f"图片已上传并设置权限: {device_path}")
+        #logger.info(f"图片已上传并设置权限: {device_path}")
     except Exception as e:
         logger.error(f"上传图片失败: {str(e)}")
 def extract_and_convert_time(input_str):
@@ -356,7 +356,7 @@ if __name__ == "__main__":
  
     # Excel文件路径，确保文件存在且格式正确
     excel_path = get_all_filenames("E:/my/job/xhs/Result" ) #    excel_path = "E:/my/job/xhs/Result/结算(23-23)2025_06_24_09_43_20.xls"  
-    startindex=2-2        #excel表格的行号-2，默认是2
+    startindex=4-2        #excel表格的行号-2，默认是2
     versionWC=WechatVersion("8.0.42") #微信版本号
     d = u2.connect() # 连接多台设备需要指定设备序列号
     # 授予存储权限
