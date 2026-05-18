@@ -157,7 +157,12 @@ class WeChatDonation:
                     time.sleep(random.uniform(0.3, 0.5))
                     #logger.info("输入金额成功")
                     # 点击"确定"按钮
-                    self.d(resourceId=self.OBJWC.PayButton).click()
+                    if(self.d(resourceId=self.OBJWC.PayButton).exists()):
+                        self.d(resourceId=self.OBJWC.PayButton).click()
+                    else:
+                        self.d(text="付款")[1].click()
+                        time.sleep(random.uniform(0.5, 0.9))
+                        self.d(text="识别并支付")[0].click()
                     time.sleep(random.uniform(0.3, 0.5))
                     #logger.info("点击付款成功")
                      
@@ -356,7 +361,7 @@ if __name__ == "__main__":
  
     # Excel文件路径，确保文件存在且格式正确
     excel_path = get_all_filenames("E:/my/job/xhs/Result" ) #    excel_path = "E:/my/job/xhs/Result/结算(23-23)2025_06_24_09_43_20.xls"  
-    startindex=4-2        #excel表格的行号-2，默认是2
+    startindex=53-2        #excel表格的行号-2，默认是2
     versionWC=WechatVersion("8.0.42") #微信版本号
     d = u2.connect() # 连接多台设备需要指定设备序列号
     # 授予存储权限

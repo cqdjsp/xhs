@@ -11,9 +11,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 from datetime import datetime, timedelta
 import re
-
-from datetime import datetime, timedelta
-import re
+ 
  
 def process_time(input_time: str) -> str:
     """
@@ -116,9 +114,16 @@ class WechatVersion:
             self.Content="com.tencent.mm:id/lp8"#用户发的信息
             self.Time="com.tencent.mm:id/lp_"#发信息时间
             self.ControlList="com.tencent.mm:id/lpg"#可滚动的信息控件
-            self.ControlHole="com.tencent.mm:id/lp6"#用户，事件，信息所在的父控件
+            self.ControlHole="com.tencent.mm:id/lp6"#用户，时间，信息所在的父控件
             self.ZFContent="com.tencent.mm:id/cu2"#转发的内容
   
+        elif(version=="8.0.70"):
+            self.User="com.tencent.mm:id/gze"#用户 
+            self.Content="com.tencent.mm:id/uls"#用户发的信息
+            self.Time="com.tencent.mm:id/tt7"#发信息时间
+            self.ControlList="com.tencent.mm:id/lqa"#可滚动的信息控件
+            self.ControlHole="com.tencent.mm:id/lp6"#用户，时间，信息所在的父控件
+            self.ZFContent="com.tencent.mm:id/cu2"#转发的内容
 def extract_and_convert_time(input_str):
     # 使用正则表达式提取日期时间部分（匹配类似2025_10_16_09_17_09的格式）
     match = re.search(r'(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2})', input_str)
@@ -136,7 +141,7 @@ def extract_and_convert_time(input_str):
     return dt
 if __name__ == "__main__":
   
-    versionWC=WechatVersion("8.0.42") #微信版本号
+    versionWC=WechatVersion("8.0.70") #微信版本号
     d = u2.connect() # 连接多台设备需要指定设备序列号 
     toinsertInfo1=[]
     cachesenders=[""]
@@ -148,7 +153,8 @@ if __name__ == "__main__":
     #----------------------找到聊天记录的最顶部---------------------------
     while(findtop==False):
         d(resourceId=versionWC.ControlList).swipe("down",10) 
-        controlHoles=d(resourceId=versionWC.ControlHole)
+        controlHole=d(resourceId=versionWC.ControlList)
+        controlHoles=controlHole.child()
         user33= controlHoles[0].child(resourceId=versionWC.User)[0].get_text()
         time33= controlHoles[0].child(resourceId=versionWC.Time)[0].get_text()
         content33=controlHoles[0].child(resourceId=versionWC.Content)[0].get_text()
@@ -168,21 +174,24 @@ if __name__ == "__main__":
     # 分支1：匹配 X分X秒 格式（支持 0分5秒、1分0秒、10分20秒 等）
     # 分支2：匹配 数字+" 格式（支持整数/小数、前后空白）
     pattern = r'^\s*(?:(\d+)分(\d+)秒|(\d+\.?\d*)")\s*$'
-    huadong=10#滑动几次后就确认了
+    huadong=3#滑动几次后就确认了
     allin=huadong #向上滑动两次后，所有的内容都已经加进去了那就是到底了
     while(allin>0):
         time.sleep(3)
-        controlHoles=d(resourceId=versionWC.ControlHole)
+        controlHole=d(resourceId=versionWC.ControlList)
+        controlHoles=controlHole.child()
         allfind=True #这次获得的页面上的数据都已经加进去了，不需要再加了
         aSwapContent=[]#一次滑动页面所有的数据
-        for i in range(0,controlHoles.count):
+        for i in range(0,controlHoles.count-1):
             # lp7=controlHoles[i].child(resourceId="com.tencent.mm:id/obc")
             # lp8=content33=controlHoles[i].child(resourceId=versionWC.ZFContent)
             # if(lp7.exists):
             #     continue
+            content33=controlHoles[i].child(resourceId=versionWC.Content)
+            if(content33.exists==False):
+                continue
             user33= controlHoles[i].child(resourceId=versionWC.User)
             time33= controlHoles[i].child(resourceId=versionWC.Time)
-            content33=controlHoles[i].child(resourceId=versionWC.Content)
             contenth=""
             sender=""
             timeh=""
@@ -219,14 +228,16 @@ if __name__ == "__main__":
                         continue
             find=False
             find1=False
-            for valueO in toinsertInfo1:
-                if(contenth!=""):
-                    if( valueO[3]==contenth):
+            if(contenth!=""):
+                for valueO in toinsertInfo1:
+                    if( valueO[3]==contenth   ):
+                        if(valueO[4]!=timeh and timeh!=""):
                         # if(valueO[3]==contenth and timeh!='' and valueO[4]!=timeh):
                         #     CFData.append((sender,timeh,contenth))
-                        #     print(f"找到重复的数据 {timeh},{sender},{contenth}")
-                        find1=True
-                        break 
+                            print(f"找到重复的数据 {timeh},{sender},{contenth}")
+                        else: 
+                            find1=True
+                            break 
 
             if(find1==False and contenth!=""):
                 toinsertInfo1.append((sender,"[聊天]" ,'text',contenth,timeh,datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
@@ -235,7 +246,7 @@ if __name__ == "__main__":
             allin-=1
         else:
             allin=huadong
-        d(resourceId=versionWC.ControlList).swipe("up",30) 
+        d(resourceId=versionWC.ControlList).swipe("up",55) #数值越大滑动越小
  
     conn = sqlite3.connect('config\\WorkData.db')
     cursorsql = conn.cursor()

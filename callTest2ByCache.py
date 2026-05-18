@@ -748,7 +748,7 @@ if __name__ == '__main__':
             payAmount=infosToSave1["IsZ"]*priceZ+infosToSave1["IsC"]*priceC+infosToSave1["IsP"]*priceP
             payAmountJS=payAmount#计算减去没在小红书查到的，有的人发 2组赞藏，不写小红书名字，查不到 #会写入excel表格中的“按用户发的然后从小红书查找计算”
             wid=   infosToSave1["contentAll"].replace("@姜可艾 没有结算完","").replace("赞",",").replace("藏",",").replace("\u2005",",").replace("。",",").replace("（）",",")\
-                .replace("评",",").lower().replace("两组",",").replace("两组赞藏",",").replace("2组",",").replace("2组赞藏",",").replace("，",",").replace("\n",",").replace(" ",",")\
+                .replace("评",",").lower().replace("两组",",").replace("评论",",").replace("两组赞藏",",").replace("2组",",").replace("2组赞藏",",").replace("，",",").replace("\n",",").replace(" ",",")\
                 .replace('[聊天记录]',",").replace("、","").replace("已自查",",").replace("）",",").replace("（",",").replace("(",",").replace(")",",").split("引用,,的消息")[0]#.replace(".",",")
 
             dataNodeFixHandleName= GetFixHandleName()
@@ -756,7 +756,7 @@ if __name__ == '__main__':
             for i in  wid.split(","):
                 ddtt=i
                 for fdata in dataNodeFixHandleName:
-                    if(fdata[1].lower() ==ddtt.lower()):
+                    if(str(fdata[1]).lower() ==ddtt.lower()):
                         ddtt=fdata[2].replace(" ", "")
                         break
                 if(ddtt!=""):
